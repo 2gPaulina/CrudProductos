@@ -83,4 +83,50 @@ interface ApiService {
         @Path("producto_id") id: String,
         @Body producto: Producto
     ): Call<CrudResponse>
+
+    @GET("categorias") // O la ruta exacta de tu FastAPI
+    fun obtenerCategorias(): Call<List<Categoria>>
+
+    @POST("categorias")
+    fun crearCategoria(
+        @Header("Authorization") token: String,
+        @Body categoria: Categoria
+    ): Call<Void> // 🌟 Cambiado a Void para solucionar el error de tipo
+
+    @DELETE("categorias/{nombre}")
+    fun eliminarCategoria(
+        @Header("Authorization") token: String,
+        @Path("nombre") nombre: String
+    ): Call<Void> // 🌟 Agregado el método de eliminación
+
+    // --- MARCAS ---
+    @GET("marcas") // O la ruta exacta de tu FastAPI
+    fun obtenerMarcas(): Call<List<Marca>>
+
+    @POST("marcas")
+    fun crearMarca(
+        @Header("Authorization") token: String,
+        @Body marca: Marca
+    ): Call<Void> // 🌟 Cambiado a Void para solucionar el error de tipo
+
+    @DELETE("marcas/{nombre}")
+    fun eliminarMarca(
+        @Header("Authorization") token: String,
+        @Path("nombre") nombre: String
+    ): Call<Void>
+
+    @PUT("categorias/{nombre}")
+    fun actualizarCategoria(
+        @Header("Authorization") token: String,
+        @Path("nombre") nombre: String,
+        @Body categoria: Categoria
+    ): Call<Void>
+
+    @PUT("marcas/{nombre}")
+    fun actualizarMarca(
+        @Header("Authorization") token: String,
+        @Path("nombre") nombre: String,
+        @Body marca: Marca
+    ): Call<Void>
+
 }
