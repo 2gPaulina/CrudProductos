@@ -1,12 +1,14 @@
 package com.example.crudproductos
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
-import android.text.InputType
 import android.util.Log
+import android.view.LayoutInflater
 import android.widget.Button
 import android.widget.EditText
 import android.widget.SearchView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
@@ -15,11 +17,12 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.auth.FirebaseAuth
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-// Modelo auxiliar para el Carrito
+// Modelo auxiliar para gestionar los artículos agregados al Carrito
 data class ItemCarrito(val producto: Producto, var cantidad: Int)
 
 class Usuario : AppCompatActivity() {
@@ -27,10 +30,11 @@ class Usuario : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var searchView: SearchView
     private lateinit var btnVerCuenta: Button
+    private lateinit var btnCerrarSesion: Button
     private lateinit var adapter: ProductoAdapter
 
     private var listaProductos = mutableListOf<Producto>()
-    private val carrito = mutableListOf<ItemCarrito>() // Carrito en memoria
+    private val carrito = mutableListOf<ItemCarrito>()
 
     private var tokenJwt: String = ""
 
@@ -45,32 +49,38 @@ class Usuario : AppCompatActivity() {
             insets
         }
 
-        // Recuperar Token
+        // Recuperar Token JWT desde SharedPreferences (Guardado en LoginActivity)
         val prefs = getSharedPreferences("MisPreferencias", Context.MODE_PRIVATE)
         tokenJwt = "Bearer ${prefs.getString("TOKEN", "")}"
 
-        // Vincular Vistas
+        // Vincular vistas del XML
         recyclerView = findViewById(R.id.recyclerViewProductos)
         searchView = findViewById(R.id.searchView)
         btnVerCuenta = findViewById(R.id.btnVerCuenta)
+        btnCerrarSesion = findViewById(R.id.btnCerrarSesion)
 
         recyclerView.layoutManager = LinearLayoutManager(this)
 
-        // Al presionar "Agregar" en un producto
+        // Botón Cerrar Sesión
+        btnCerrarSesion.setOnClickListener {
+            cerrarSesion()
+        }
+
+        // Configuración del Adaptador de Productos (Al presionar "Agregar")
         adapter = ProductoAdapter(listaProductos) { producto ->
             mostrarDialogoSeleccionarCantidad(producto)
         }
         recyclerView.adapter = adapter
 
-        // Al presionar el botón "Ver Cuenta"
+        // Botón "Ver Cuenta" (Abre el resumen flotante del Carrito)
         btnVerCuenta.setOnClickListener {
             mostrarDialogoResumenCuenta()
         }
 
-        // Descargar productos
+        // Cargar productos desde FastAPI / MongoDB
         obtenerProductosDelServidor()
 
-        // Buscador
+        // Listener del Buscador local
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean = false
             override fun onQueryTextChange(newText: String?): Boolean {
@@ -81,33 +91,83 @@ class Usuario : AppCompatActivity() {
     }
 
     // -------------------------------------------------------------
-    // 🪟 VENTANA FLOTANTE 1: SELECCIONAR CANTIDAD
+    // 🚪 CERRAR SESIÓN
+    // -------------------------------------------------------------
+    private fun cerrarSesion() {
+        FirebaseAuth.getInstance().signOut()
+
+        val prefs = getSharedPreferences("MisPreferencias", Context.MODE_PRIVATE)
+        prefs.edit().clear().apply()
+
+        Toast.makeText(this, "Sesión cerrada correctamente", Toast.LENGTH_SHORT).show()
+
+        val intent = Intent(this, LoginActivity::class.java)
+        startActivity(intent)
+        finish()
+    }
+
+    // -------------------------------------------------------------
+    // 🪟 VENTANA FLOTANTE 1: SELECCIONAR CANTIDAD (+ / -)
     // -------------------------------------------------------------
     private fun mostrarDialogoSeleccionarCantidad(producto: Producto) {
-        val input = EditText(this).apply {
-            inputType = InputType.TYPE_CLASS_NUMBER
-            hint = "Cantidad (Máx: ${producto.inventario})"
-            setText("1")
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_seleccionar_cantidad, null)
+
+        val tvNombre = dialogView.findViewById<TextView>(R.id.tvNombreProductoDialog)
+        val tvPrecio = dialogView.findViewById<TextView>(R.id.tvPrecioUnitarioDialog)
+        val tvStock = dialogView.findViewById<TextView>(R.id.tvStockDisponibleDialog)
+        val etCantidad = dialogView.findViewById<EditText>(R.id.etCantidadDialog)
+        val btnRestar = dialogView.findViewById<Button>(R.id.btnRestar)
+        val btnSumar = dialogView.findViewById<Button>(R.id.btnSumar)
+        val btnAgregar = dialogView.findViewById<Button>(R.id.btnAgregarDialog)
+        val btnCancelar = dialogView.findViewById<Button>(R.id.btnCancelarCantidadDialog)
+
+        tvNombre.text = producto.nombre
+        tvPrecio.text = "Precio: $${String.format("%.2f", producto.precio_venta)}"
+        tvStock.text = "Stock: ${producto.inventario}"
+
+        // Botón RESTAR (-)
+        btnRestar.setOnClickListener {
+            val actual = etCantidad.text.toString().toIntOrNull() ?: 1
+            if (actual > 1) {
+                etCantidad.setText((actual - 1).toString())
+            }
         }
 
-        AlertDialog.Builder(this)
-            .setTitle("Agregar: ${producto.nombre}")
-            .setMessage("Precio unitario: $${String.format("%.2f", producto.precio_venta)}\nIngresa la cantidad a vender:")
-            .setView(input)
-            .setPositiveButton("Agregar") { _, _ ->
-                val cantidadTexto = input.text.toString()
-                val cantidad = cantidadTexto.toIntOrNull() ?: 0
-
-                if (cantidad <= 0) {
-                    Toast.makeText(this, "Ingresa una cantidad válida", Toast.LENGTH_SHORT).show()
-                } else if (cantidad > producto.inventario) {
-                    Toast.makeText(this, "Excede el inventario disponible", Toast.LENGTH_SHORT).show()
-                } else {
-                    agregarAlCarrito(producto, cantidad)
-                }
+        // Botón SUMAR (+)
+        btnSumar.setOnClickListener {
+            val actual = etCantidad.text.toString().toIntOrNull() ?: 1
+            if (actual < producto.inventario) {
+                etCantidad.setText((actual + 1).toString())
+            } else {
+                Toast.makeText(this, "Stock máximo alcanzado", Toast.LENGTH_SHORT).show()
             }
-            .setNegativeButton("Cancelar", null)
-            .show()
+        }
+
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        btnAgregar.setOnClickListener {
+            val cantidadTexto = etCantidad.text.toString()
+            val cantidad = cantidadTexto.toIntOrNull() ?: 0
+
+            if (cantidad <= 0) {
+                Toast.makeText(this, "Ingresa una cantidad válida", Toast.LENGTH_SHORT).show()
+            } else if (cantidad > producto.inventario) {
+                Toast.makeText(this, "Excede el inventario disponible", Toast.LENGTH_SHORT).show()
+            } else {
+                agregarAlCarrito(producto, cantidad)
+                dialog.dismiss()
+            }
+        }
+
+        btnCancelar.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     private fun agregarAlCarrito(producto: Producto, cantidad: Int) {
@@ -134,7 +194,7 @@ class Usuario : AppCompatActivity() {
     }
 
     // -------------------------------------------------------------
-    // 🪟 VENTANA FLOTANTE 2: RESUMEN Y CONFIRMACIÓN DE VENTA
+    // 🪟 VENTANA FLOTANTE 2: RESUMEN Y CONFIRMACIÓN DE LA CUENTA
     // -------------------------------------------------------------
     private fun mostrarDialogoResumenCuenta() {
         if (carrito.isEmpty()) {
@@ -142,36 +202,47 @@ class Usuario : AppCompatActivity() {
             return
         }
 
-        val builderDetalle = StringBuilder()
-        var totalGeneral = 0.0
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_resumen_cuenta, null)
 
-        for (item in carrito) {
-            val subtotal = item.producto.precio_venta * item.cantidad
-            totalGeneral += subtotal
-            builderDetalle.append("• ${item.producto.nombre}\n")
-            builderDetalle.append("  ${item.cantidad} x $${String.format("%.2f", item.producto.precio_venta)} = $${String.format("%.2f", subtotal)}\n\n")
+        val rvCarrito = dialogView.findViewById<RecyclerView>(R.id.rvCarrito)
+        val tvTotal = dialogView.findViewById<TextView>(R.id.tvTotalCuentaDialog)
+        val btnCobrar = dialogView.findViewById<Button>(R.id.btnCobrarDialog)
+        val btnVaciar = dialogView.findViewById<Button>(R.id.btnVaciarDialog)
+        val btnSeguir = dialogView.findViewById<Button>(R.id.btnSeguirComprandoDialog)
+
+        rvCarrito.layoutManager = LinearLayoutManager(this)
+        rvCarrito.adapter = CarritoAdapter(carrito)
+
+        val totalGeneral = carrito.sumOf { it.producto.precio_venta * it.cantidad }
+        tvTotal.text = "$${String.format("%.2f", totalGeneral)}"
+
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        btnCobrar.setOnClickListener {
+            dialog.dismiss()
+            procesarVentaCarrito()
         }
 
-        builderDetalle.append("-----------------------------------\n")
-        builderDetalle.append("TOTAL A COBRAR: $${String.format("%.2f", totalGeneral)}")
+        btnVaciar.setOnClickListener {
+            carrito.clear()
+            actualizarBotonCuenta()
+            dialog.dismiss()
+            Toast.makeText(this, "Carrito vaciado", Toast.LENGTH_SHORT).show()
+        }
 
-        AlertDialog.Builder(this)
-            .setTitle("📋 Resumen de la Venta")
-            .setMessage(builderDetalle.toString())
-            .setPositiveButton("💳 Cobrar / Confirmar") { _, _ ->
-                procesarVentaCarrito()
-            }
-            .setNeutralButton("Vaciar Carrito") { _, _ ->
-                carrito.clear()
-                actualizarBotonCuenta()
-                Toast.makeText(this, "Carrito vaciado", Toast.LENGTH_SHORT).show()
-            }
-            .setNegativeButton("Seguir comprando", null)
-            .show()
+        btnSeguir.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     // -------------------------------------------------------------
-    // 🌐 PROCESAR VENTAS CON FASTAPI
+    // 🌐 ENVIAR VENTA Y SINCRONIZAR CON FASTAPI
     // -------------------------------------------------------------
     private fun procesarVentaCarrito() {
         var ventasExitosas = 0
@@ -188,7 +259,7 @@ class Usuario : AppCompatActivity() {
                             Toast.makeText(this@Usuario, "¡Venta completada con éxito!", Toast.LENGTH_LONG).show()
                             carrito.clear()
                             actualizarBotonCuenta()
-                            obtenerProductosDelServidor() // Recargar lista e inventario actualizado
+                            obtenerProductosDelServidor()
                         }
                     }
 
