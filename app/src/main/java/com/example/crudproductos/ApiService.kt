@@ -6,6 +6,7 @@ import retrofit2.http.*
 // =================================================================
 // 📦 MODELOS DE DATOS COMPLETOS (ESPEJO FIEL DE TU EXAMEN)
 // =================================================================
+
 data class LoginRequest(val firebase_token: String, val correo: String)
 
 // Estructura completa de Usuario conforme a tu tabla
@@ -17,6 +18,7 @@ data class UsuarioResponse(
     val fecha_registro: String,
     val activo: Boolean
 )
+
 data class LoginResponse(val status: String, val token_jwt: String, val usuario: UsuarioResponse)
 
 // Sub-objeto embebido para el Proveedor del producto
@@ -64,6 +66,11 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Body producto: Producto
     ): Call<CrudResponse>
+
+    @GET("productos")
+    fun obtenerTodosLosProductos(
+        @Header("Authorization") token: String
+    ): Call<List<Producto>>
 
     @DELETE("productos/{codigo}")
     fun bajaProducto(

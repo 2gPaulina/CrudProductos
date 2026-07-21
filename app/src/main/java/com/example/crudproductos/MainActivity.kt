@@ -1,13 +1,12 @@
 package com.example.crudproductos
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import retrofit2.Call
 import retrofit2.Callback
@@ -16,11 +15,11 @@ import retrofit2.Response
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
-    private var tokenJwtGuardado: String? = null // Aquí guardaremos el JWT para usar el CRUD
+    private var tokenJwtGuardado: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_login) // <-- Verifica que coincida con tu XML
+        setContentView(R.layout.activity_login)
 
         // Inicializar Firebase Auth
         auth = FirebaseAuth.getInstance()
@@ -42,13 +41,11 @@ class LoginActivity : AppCompatActivity() {
             auth.signInWithEmailAndPassword(correo, password)
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
-                        // Firebase dice que el usuario y contraseña son correctos
                         Toast.makeText(this, "Firebase Auth: Éxito", Toast.LENGTH_SHORT).show()
 
                         // 2. PASO JWT: Solicitar el token JWT firmado a nuestro FastAPI
                         intercambiarTokenConFastAPI(correo)
                     } else {
-                        // Error de credenciales en Firebase
                         Toast.makeText(this, "Error en Firebase: ${task.exception?.message}", Toast.LENGTH_LONG).show()
                     }
                 }
@@ -56,7 +53,6 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun intercambiarTokenConFastAPI(correo: String) {
-        // Creamos la petición para nuestro servidor FastAPI (Mandamos un token de prueba y el correo)
         val requestData = LoginRequest(firebase_token = "token_desde_android", correo = correo)
 
         RetrofitClient.instance.loginUsuario(requestData).enqueue(object : Callback<LoginResponse> {
@@ -64,21 +60,40 @@ class LoginActivity : AppCompatActivity() {
                 if (response.isSuccessful && response.body() != null) {
                     val loginResponse = response.body()!!
 
-                    // ¡GUARDAMOS EL TOKEN JWT SOBERANO!
                     tokenJwtGuardado = loginResponse.token_jwt
-                    val rolUsuario = loginResponse.usuario.rol
+
+                    // Convertimos el rol a minúsculas para evitar problemas de mayúsculas ("Empleado" vs "empleado")
+                    val rolUsuario = loginResponse.usuario.rol.lowercase().trim()
+
+                    // 1. Guardamos el Token en SharedPreferences para la pantalla de Usuario
+                    val prefs = getSharedPreferences("MisPreferencias", Context.MODE_PRIVATE)
+                    prefs.edit().putString("TOKEN", tokenJwtGuardado).apply()
 
                     Toast.makeText(this@LoginActivity, "JWT Recibido. Rol: $rolUsuario", Toast.LENGTH_LONG).show()
 
-                    val intent = android.content.Intent(this@LoginActivity, ProductosActivity::class.java)
+                    // 2. DECISIÓN DE PANTALLA SEGÚN EL ROL
+                    val intent: Intent = when (rolUsuario) {
+                        "empleado", "usuario" -> {
+                            // Si es un empleado o usuario estándar, va al Punto de Venta
+                            Intent(this@LoginActivity, Usuario::class.java)
+                        }
+                        "admin", "encargado" -> {
+                            // Si es administrador o encargado, va al CRUD completo
+                            Intent(this@LoginActivity, ProductosActivity::class.java)
+                        }
+                        else -> {
+                            // Si el rol es desconocido, por defecto abrimos la pantalla básica de usuario
+                            Intent(this@LoginActivity, Usuario::class.java)
+                        }
+                    }
 
-                    // Le pasamos el Token JWT de alta seguridad a la siguiente pantalla para que pueda hacer el CRUD
+                    // Le pasamos también el Token JWT por Intent por si lo utilizas directamente en la Activity
                     intent.putExtra("TOKEN_JWT", tokenJwtGuardado)
 
-                    // Arrancamos la pantalla de productos
+                    // Arrancamos la pantalla correspondiente
                     startActivity(intent)
 
-                    // Cerramos el Login para que si el usuario le pica al botón de "Atrás" en el cel, no se regrese aquí
+                    // Cerramos el Login
                     finish()
                 } else {
                     Toast.makeText(this@LoginActivity, "FastAPI rechazó la solicitud", Toast.LENGTH_SHORT).show()
@@ -86,7 +101,7 @@ class LoginActivity : AppCompatActivity() {
             }
 
             override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
-                Toast.makeText(this@LoginActivity, "Fallo de red: ${t.message}", android.widget.Toast.LENGTH_LONG).show()
+                Toast.makeText(this@LoginActivity, "Fallo de red: ${t.message}", Toast.LENGTH_LONG).show()
             }
         })
     }

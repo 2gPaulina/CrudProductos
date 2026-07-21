@@ -15,18 +15,21 @@
         android:theme="@style/Theme.CrudProductos"
         android:usesCleartextTraffic="true"
         tools:targetApi="34">
-
+        <activity
+            android:name=".Usuario"
+            android:exported="false" />
         <activity
             android:name=".LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".ProductosActivity" android:exported="false" />
-
+        <activity
+            android:name=".ProductosActivity"
+            android:exported="false" />
     </application>
 
 </manifest>
