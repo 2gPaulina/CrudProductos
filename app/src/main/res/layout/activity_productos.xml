@@ -1,402 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F3F4F6"
-    android:fillViewport="true">
+    android:orientation="vertical"
+    android:background="#F4F6F9"
+    android:padding="16dp">
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:layout_marginBottom="16dp">
 
-        <!-- HEADER / ENCABEZADO -->
-        <RelativeLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:paddingHorizontal="4dp">
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:layout_centerInParent="true"
-                android:orientation="vertical">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Mi Tiendita"
-                    android:textColor="#4B5563"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:textAlignment="viewStart"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Control de Inventario"
-                    android:textColor="#111827"
-                    android:textSize="22sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnCerrarSesion"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_centerInParent="true"
-                android:text="Salir"
-                android:textColor="#EF4444"
-                android:textStyle="bold"/>
-        </RelativeLayout>
-
-        <!-- TARJETA 1: INFORMACIÓN DEL PRODUCTO -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp"
-            app:cardBackgroundColor="#FFFFFF"
-            app:strokeWidth="0dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Datos del Artículo"
-                    android:textColor="#111827"
-                    android:textStyle="bold"
-                    android:textSize="14sp"
-                    android:layout_marginBottom="12dp"/>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:textColorHint="#4B5563"
-                    app:hintTextColor="#111827"
-                    app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp"
-                    app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etCodigoBarras"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Código de Barras (_id)"
-                        android:textColor="#111827"
-                        android:inputType="number" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:textColorHint="#4B5563"
-                    app:hintTextColor="#111827"
-                    app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp"
-                    app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etNombreProducto"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Nombre del Artículo"
-                        android:textColor="#111827"
-                        android:inputType="text" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:textColorHint="#4B5563"
-                    app:hintTextColor="#111827"
-                    app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp"
-                    app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etDescripcion"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Descripción"
-                        android:textColor="#111827"
-                        android:inputType="text" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="6dp"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:textColorHint="#4B5563"
-                        app:hintTextColor="#111827"
-                        app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp"
-                        app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp">
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etCategoria"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:hint="Categoría"
-                            android:textColor="#111827"
-                            android:inputType="text" />
-                    </com.google.android.material.textfield.TextInputLayout>
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="6dp"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:textColorHint="#4B5563"
-                        app:hintTextColor="#111827"
-                        app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp"
-                        app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp">
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etMarca"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:hint="Marca"
-                            android:textColor="#111827"
-                            android:inputType="text" />
-                    </com.google.android.material.textfield.TextInputLayout>
-                </LinearLayout>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- TARJETA 2: PRECIOS Y STOCK -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp"
-            app:cardBackgroundColor="#FFFFFF"
-            app:strokeWidth="0dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Precios e Inventario"
-                    android:textColor="#111827"
-                    android:textStyle="bold"
-                    android:textSize="14sp"
-                    android:layout_marginBottom="12dp"/>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="12dp">
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="6dp"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:textColorHint="#4B5563"
-                        app:hintTextColor="#111827"
-                        app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp"
-                        app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp">
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etPrecioCompra"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:hint="Costo Compra ($)"
-                            android:textColor="#111827"
-                            android:inputType="numberDecimal" />
-                    </com.google.android.material.textfield.TextInputLayout>
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="6dp"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:textColorHint="#4B5563"
-                        app:hintTextColor="#111827"
-                        app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp"
-                        app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp">
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etPrecioVenta"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:hint="Precio Venta ($)"
-                            android:textColor="#111827"
-                            android:inputType="numberDecimal" />
-                    </com.google.android.material.textfield.TextInputLayout>
-                </LinearLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:textColorHint="#4B5563"
-                    app:hintTextColor="#111827"
-                    app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp"
-                    app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etInventario"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Cantidad en Existencia"
-                        android:textColor="#111827"
-                        android:inputType="number" />
-                </com.google.android.material.textfield.TextInputLayout>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- TARJETA 3: PROVEEDOR -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp"
-            app:cardBackgroundColor="#FFFFFF"
-            app:strokeWidth="0dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Datos del Proveedor / Surtidor"
-                    android:textColor="#111827"
-                    android:textStyle="bold"
-                    android:textSize="14sp"
-                    android:layout_marginBottom="12dp"/>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:textColorHint="#4B5563"
-                    app:hintTextColor="#111827"
-                    app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp"
-                    app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etProveedorNombre"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Nombre o Ruta del Proveedor"
-                        android:textColor="#111827"
-                        android:inputType="text" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:textColorHint="#4B5563"
-                    app:hintTextColor="#111827"
-                    app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp"
-                    app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etProveedorDireccion"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Dirección o Planta Origen"
-                        android:textColor="#111827"
-                        android:inputType="text" />
-                </com.google.android.material.textfield.TextInputLayout>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- PANEL DE ACCIONES (GRID 2x2) -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnConsulta"
-                android:layout_width="0dp"
-                android:layout_height="54dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="6dp"
-                android:text="Buscar"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold"
-                app:backgroundTint="#4B5563"
-                app:cornerRadius="12dp"/>
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnAlta"
-                android:layout_width="0dp"
-                android:layout_height="54dp"
-                android:layout_weight="1"
-                android:layout_marginStart="6dp"
-                android:text="Registrar"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold"
-                app:backgroundTint="#10B981"
-                app:cornerRadius="12dp"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="20dp">
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnModificar"
-                android:layout_width="0dp"
-                android:layout_height="54dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="6dp"
-                android:text="Modificar"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold"
-                app:backgroundTint="#2563EB"
-                app:cornerRadius="12dp"/>
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnBaja"
-                android:layout_width="0dp"
-                android:layout_height="54dp"
-                android:layout_weight="1"
-                android:layout_marginStart="6dp"
-                android:text="Eliminar"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold"
-                app:backgroundTint="#EF4444"
-                app:cornerRadius="12dp"/>
-        </LinearLayout>
-
-        <!-- ACCIÓN PRINCIPAL DESTACADA -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnVenta"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:layout_marginBottom="16dp"
-            android:text="⚡ REGISTRAR VENTA (-1 STOCK)"
-            android:textColor="#FFFFFF"
-            android:textSize="15sp"
+            android:text="Control de Productos"
+            android:textSize="22sp"
             android:textStyle="bold"
-            app:backgroundTint="#F59E0B"
-            app:cornerRadius="14dp"
-            android:elevation="4dp"/>
+            android:textColor="#1A237E"
+            android:layout_centerVertical="true" />
 
-    </LinearLayout>
-</androidx.core.widget.NestedScrollView>
+        <Button
+            android:id="@+id/btnCerrarSesion"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:text="Salir"
+            android:textColor="#D32F2F"
+            android:textStyle="bold" />
+    </RelativeLayout>
+
+    <Button
+        android:id="@+id/btnAlta"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginBottom="16dp"
+        android:text="+ AGREGAR NUEVO PRODUCTO"
+        android:backgroundTint="#2E7D32"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        app:cornerRadius="8dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Catálogo de Productos"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="#546E7A"
+        android:layout_marginBottom="8dp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvProductos"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="8dp" />
+
+</LinearLayout>

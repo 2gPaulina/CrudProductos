@@ -6,7 +6,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 object RetrofitClient {
     // REEMPLAZA "192.168.1.XX" POR LA DIRECCIÓN IP DE TI COMPUTADORA
     // Si usas el emulador de Android Studio por defecto, puedes usar "10.0.2.2"
-    private const val BASE_URL = "http://10.112.19.87:8000/"
+    private const val BASE_URL = "https://backend-tienda-fastapi.onrender.com/"
 
     val instance: ApiService by lazy {
         val retrofit = Retrofit.Builder()
