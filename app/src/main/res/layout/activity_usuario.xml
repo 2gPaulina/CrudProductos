@@ -8,6 +8,47 @@
     android:background="#F8FAFC"
     tools:context=".Usuario">
 
+    <androidx.cardview.widget.CardView
+        android:id="@+id/searchCard"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="16dp"
+        app:cardBackgroundColor="#FFFFFF"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="2dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/headerCard">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <SearchView
+                android:id="@+id/searchView"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:iconifiedByDefault="false"
+                android:queryBackground="@android:color/transparent"
+                android:queryHint="Buscar producto..." />
+
+            <!-- 📷 BOTÓN DE CÁMARA PARA ESCANEAR -->
+            <ImageButton
+                android:id="@+id/btnEscanearCamara"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Escanear producto"
+                android:src="@android:drawable/ic_menu_camera"
+                app:tint="#0284C7" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
     <!-- ⚪ ENCABEZADO SUPERIOR BLANCO -->
     <androidx.cardview.widget.CardView
         android:id="@+id/headerCard"

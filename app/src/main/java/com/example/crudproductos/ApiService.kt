@@ -37,9 +37,9 @@ data class Producto(
     val fecha_creacion: String,
     val fecha_actualizacion: String,
     val creado_por: String,
-    val activo: Boolean
+    val activo: Boolean,
+    val tasa_iva: Double = 0.16
 )
-
 data class CrudResponse(val status: String, val message: String)
 data class VentaRequest(val codigo_barras: String, val cantidad: Int = 1)
 data class VentaResponse(val status: String, val inventario_nuevo: Int)

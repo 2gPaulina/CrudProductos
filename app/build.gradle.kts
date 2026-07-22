@@ -51,4 +51,9 @@ dependencies {
     // Dependencias de Retrofit para conectar con FastAPI
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    // 📷 Escáner de código de barras
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+
+    // 📍 Ubicación GPS de Google
+    implementation("com.google.android.gms:play-services-location:21.2.0")
 }
