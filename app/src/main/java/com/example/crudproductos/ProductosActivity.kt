@@ -1,6 +1,8 @@
 package com.example.crudproductos
 
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.text.InputFilter
 import android.view.LayoutInflater
@@ -30,10 +32,8 @@ class ProductosActivity : AppCompatActivity() {
     private var listaCategorias: List<Categoria> = listOf()
     private var listaMarcas: List<Marca> = listOf()
 
-    // 📷 Referencia al campo de texto del formulario para el escáner
     private var etCodigoFormRef: EditText? = null
 
-    // 📷 Lanzador para el Escáner de Cámara ZXing
     private val barcodeLauncherFormulario = registerForActivityResult(ScanContract()) { result ->
         if (result.contents != null) {
             val codigoEscaneado = result.contents
@@ -115,15 +115,14 @@ class ProductosActivity : AppCompatActivity() {
     }
 
     // ==========================================
-    // 📝 FORMULARIO DE PRODUCTO (USANDO EL XML)
+    // 📝 FORMULARIO CONECTADO AL XML
     // ==========================================
     private fun mostrarFormularioProducto(productoExistente: Producto?) {
         val esEdicion = productoExistente != null
 
-        // 🎯 INFLAMOS EL XML DE DISEÑO
+        // Inflado directo de tu XML dialog_formulario_producto.xml
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_formulario_producto, null)
 
-        // Vincular componentes del XML
         val tvTitulo = dialogView.findViewById<TextView>(R.id.tvTituloFormulario)
         val etCodigo = dialogView.findViewById<EditText>(R.id.etCodigoForm)
         val btnEscanear = dialogView.findViewById<ImageButton>(R.id.btnEscanearFormulario)
@@ -142,22 +141,20 @@ class ProductosActivity : AppCompatActivity() {
         val etProveedor = dialogView.findViewById<EditText>(R.id.etProveedorForm)
         val etDistribuidor = dialogView.findViewById<EditText>(R.id.etDistribuidorForm)
 
-        // Asignar referencia global para pegar el resultado del escáner
         etCodigoFormRef = etCodigo
 
-        // Aplicar filtros de longitud máxima
+        // Filtros de longitud (Precios limitados a 4 dígitos)
         etCodigo.filters = arrayOf(InputFilter.LengthFilter(13))
-        etPrecioCompra.filters = arrayOf(InputFilter.LengthFilter(7))
-        etPrecioVenta.filters = arrayOf(InputFilter.LengthFilter(7))
+        etPrecioCompra.filters = arrayOf(InputFilter.LengthFilter(4))
+        etPrecioVenta.filters = arrayOf(InputFilter.LengthFilter(4))
         etStock.filters = arrayOf(InputFilter.LengthFilter(4))
 
-        // Precargar datos si es edición
         if (esEdicion) {
-            tvTitulo.text = "Modificar Producto"
+            tvTitulo?.text = "Modificar Producto"
             etCodigo.setText(productoExistente?._id)
-            etCodigo.isEnabled = false // No se modifica el código/ID al editar
+            etCodigo.isEnabled = false
             btnEscanear.isEnabled = false
-            btnEscanear.alpha = 0.5f
+            btnEscanear.alpha = 0.4f
 
             etNombre.setText(productoExistente?.nombre)
             etDesc.setText(productoExistente?.descripcion)
@@ -165,19 +162,17 @@ class ProductosActivity : AppCompatActivity() {
             etPrecioVenta.setText(productoExistente?.precio_venta?.toString())
             etStock.setText(productoExistente?.inventario?.toString())
         } else {
-            tvTitulo.text = "Registrar Producto"
+            tvTitulo?.text = "Registrar Producto"
         }
 
-        // 📷 Acción del Botón de la Cámara
         btnEscanear.setOnClickListener {
             val options = ScanOptions()
-                .setPrompt("Apunta al código de barras del empaque")
+                .setPrompt("Apunta al código de barras")
                 .setBeepEnabled(true)
                 .setOrientationLocked(false)
             barcodeLauncherFormulario.launch(options)
         }
 
-        // --- SPINNER CATEGORÍA ---
         val updateAdapterCat = {
             val nombresCat = mutableListOf("Seleccionar Categoría *")
             nombresCat.addAll(listaCategorias.map { it.nombre })
@@ -220,7 +215,6 @@ class ProductosActivity : AppCompatActivity() {
             popup.show()
         }
 
-        // --- SPINNER MARCA & AUTOCOMPLETADO DE PROVEEDOR ---
         val updateAdapterMarca = {
             val nombresMarcas = mutableListOf("Seleccionar Marca *")
             nombresMarcas.addAll(listaMarcas.map { it.nombre })
@@ -281,7 +275,6 @@ class ProductosActivity : AppCompatActivity() {
             popup.show()
         }
 
-        // --- CONSTRUCCIÓN DEL DIÁLOGO ---
         val dialog = AlertDialog.Builder(this)
             .setView(dialogView)
             .setPositiveButton(if (esEdicion) "Actualizar" else "Guardar", null)
@@ -289,8 +282,16 @@ class ProductosActivity : AppCompatActivity() {
             .create()
 
         dialog.setOnShowListener {
-            val b = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-            b.setOnClickListener {
+            // Fondo blanco en la barra de botones del AlertDialog para unirlo estéticamente con el XML
+            dialog.window?.setBackgroundDrawable(ColorDrawable(Color.WHITE))
+
+            val btnPositive = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            val btnNegative = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+
+            btnPositive.setTextColor(Color.parseColor("#1976D2"))
+            btnNegative.setTextColor(Color.parseColor("#757575"))
+
+            btnPositive.setOnClickListener {
                 val codigoStr = etCodigo.text.toString().trim()
                 val nombreStr = etNombre.text.toString().trim()
                 val descStr = etDesc.text.toString().trim()
@@ -302,12 +303,10 @@ class ProductosActivity : AppCompatActivity() {
                 val marcaStr = if (spinnerMarca.selectedItemPosition > 0) spinnerMarca.selectedItem.toString() else ""
                 val provStr = etProveedor.text.toString().trim()
 
-                // ⚡ VALIDACIÓN CÓDIGO DE BARRAS (13 DÍGITOS)
                 if (codigoStr.isEmpty()) { etCodigo.error = "Requerido"; return@setOnClickListener }
                 if (codigoStr.length != 13) { etCodigo.error = "Debe tener exactamente 13 dígitos"; return@setOnClickListener }
                 if (nombreStr.isEmpty()) { etNombre.error = "Requerido"; return@setOnClickListener }
 
-                // ⚡ VALIDACIÓN DE NOMBRES SIMILARES O DUPLICADOS
                 val nombreIngresadoLimpio = normalizarTexto(nombreStr)
                 val productoSimilar = listaProductos.find { prod ->
                     val nombreExistenteLimpio = normalizarTexto(prod.nombre)
@@ -321,14 +320,13 @@ class ProductosActivity : AppCompatActivity() {
                     return@setOnClickListener
                 }
 
-                // ⚡ PRECIOS Y STOCK (MÁXIMO 9,999)
                 val precioCompra = pCompraStr.toDoubleOrNull()
                 if (precioCompra == null || precioCompra <= 0) { etPrecioCompra.error = "Precio inválido"; return@setOnClickListener }
-                if (precioCompra > 9999.99) { etPrecioCompra.error = "No debe exceder $9,999"; return@setOnClickListener }
+                if (precioCompra > 9999) { etPrecioCompra.error = "No debe exceder $9,999"; return@setOnClickListener }
 
                 val precioVenta = pVentaStr.toDoubleOrNull()
                 if (precioVenta == null || precioVenta <= 0) { etPrecioVenta.error = "Precio inválido"; return@setOnClickListener }
-                if (precioVenta > 9999.99) { etPrecioVenta.error = "No debe exceder $9,999"; return@setOnClickListener }
+                if (precioVenta > 9999) { etPrecioVenta.error = "No debe exceder $9,999"; return@setOnClickListener }
 
                 if (stockStr.isEmpty()) { etStock.error = "Requerido"; return@setOnClickListener }
                 val stockInt = stockStr.toIntOrNull()
@@ -380,7 +378,7 @@ class ProductosActivity : AppCompatActivity() {
     }
 
     // ==========================================
-    // 🏷️ MODALES PARA CATEGORÍAS
+    // 🏷️ MODALES PARA CATEGORÍAS Y MARCAS
     // ==========================================
     private fun mostrarDialogoCrearCategoria(onExito: () -> Unit) {
         val layout = LinearLayout(this).apply {
@@ -392,7 +390,7 @@ class ProductosActivity : AppCompatActivity() {
         layout.addView(inputNombre)
         layout.addView(inputDesc)
 
-        AlertDialog.Builder(this).setTitle("Nueva Categoría").setView(layout).setPositiveButton("Guardar") { _, _ ->
+        val d = AlertDialog.Builder(this).setTitle("Nueva Categoría").setView(layout).setPositiveButton("Guardar") { _, _ ->
             val nom = inputNombre.text.toString().trim()
             val desc = inputDesc.text.toString().trim()
 
@@ -403,7 +401,13 @@ class ProductosActivity : AppCompatActivity() {
                 override fun onResponse(call: Call<Void>, response: Response<Void>) { if (response.isSuccessful) onExito() }
                 override fun onFailure(call: Call<Void>, t: Throwable) {}
             })
-        }.setNegativeButton("Cancelar", null).show()
+        }.setNegativeButton("Cancelar", null).create()
+
+        d.setOnShowListener {
+            d.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.parseColor("#1976D2"))
+            d.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.parseColor("#757575"))
+        }
+        d.show()
     }
 
     private fun mostrarDialogoEditarCategoria(cat: Categoria, onExito: () -> Unit) {
@@ -416,7 +420,7 @@ class ProductosActivity : AppCompatActivity() {
         layout.addView(inputNombre)
         layout.addView(inputDesc)
 
-        AlertDialog.Builder(this).setTitle("Modificar Categoría").setView(layout).setPositiveButton("Actualizar") { _, _ ->
+        val d = AlertDialog.Builder(this).setTitle("Modificar Categoría").setView(layout).setPositiveButton("Actualizar") { _, _ ->
             val nom = inputNombre.text.toString().trim()
             val desc = inputDesc.text.toString().trim()
 
@@ -427,12 +431,15 @@ class ProductosActivity : AppCompatActivity() {
                 override fun onResponse(call: Call<Void>, response: Response<Void>) { if (response.isSuccessful) onExito() }
                 override fun onFailure(call: Call<Void>, t: Throwable) {}
             })
-        }.setNegativeButton("Cancelar", null).show()
+        }.setNegativeButton("Cancelar", null).create()
+
+        d.setOnShowListener {
+            d.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.parseColor("#1976D2"))
+            d.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.parseColor("#757575"))
+        }
+        d.show()
     }
 
-    // ==========================================
-    // 🏷️ MODALES PARA MARCAS
-    // ==========================================
     private fun mostrarDialogoCrearMarca(onExito: () -> Unit) {
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -449,7 +456,7 @@ class ProductosActivity : AppCompatActivity() {
         layout.addView(inputProveedor)
         layout.addView(inputDistribuidor)
 
-        AlertDialog.Builder(this).setTitle("Nueva Marca").setView(layout).setPositiveButton("Guardar") { _, _ ->
+        val d = AlertDialog.Builder(this).setTitle("Nueva Marca").setView(layout).setPositiveButton("Guardar") { _, _ ->
             val nom = inputNombre.text.toString().trim()
             val origen = inputOrigen.text.toString().trim()
             val prov = inputProveedor.text.toString().trim()
@@ -471,7 +478,13 @@ class ProductosActivity : AppCompatActivity() {
                 override fun onResponse(call: Call<Void>, response: Response<Void>) { if (response.isSuccessful) onExito() }
                 override fun onFailure(call: Call<Void>, t: Throwable) {}
             })
-        }.setNegativeButton("Cancelar", null).show()
+        }.setNegativeButton("Cancelar", null).create()
+
+        d.setOnShowListener {
+            d.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.parseColor("#1976D2"))
+            d.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.parseColor("#757575"))
+        }
+        d.show()
     }
 
     private fun mostrarDialogoEditarMarca(marca: Marca, onExito: () -> Unit) {
@@ -490,7 +503,7 @@ class ProductosActivity : AppCompatActivity() {
         layout.addView(inputProveedor)
         layout.addView(inputDistribuidor)
 
-        AlertDialog.Builder(this).setTitle("Modificar Marca").setView(layout).setPositiveButton("Actualizar") { _, _ ->
+        val d = AlertDialog.Builder(this).setTitle("Modificar Marca").setView(layout).setPositiveButton("Actualizar") { _, _ ->
             val nom = inputNombre.text.toString().trim()
             val origen = inputOrigen.text.toString().trim()
             val prov = inputProveedor.text.toString().trim()
@@ -513,11 +526,17 @@ class ProductosActivity : AppCompatActivity() {
                 override fun onResponse(call: Call<Void>, response: Response<Void>) { if (response.isSuccessful) onExito() }
                 override fun onFailure(call: Call<Void>, t: Throwable) {}
             })
-        }.setNegativeButton("Cancelar", null).show()
+        }.setNegativeButton("Cancelar", null).create()
+
+        d.setOnShowListener {
+            d.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.parseColor("#1976D2"))
+            d.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.parseColor("#757575"))
+        }
+        d.show()
     }
 
     private fun confirmarEliminacion(producto: Producto) {
-        AlertDialog.Builder(this)
+        val d = AlertDialog.Builder(this)
             .setTitle("Confirmar Borrado")
             .setMessage("¿Deseas eliminar '${producto.nombre}'?")
             .setPositiveButton("Borrar") { _, _ ->
@@ -529,12 +548,15 @@ class ProductosActivity : AppCompatActivity() {
                 })
             }
             .setNegativeButton("Cancelar", null)
-            .show()
+            .create()
+
+        d.setOnShowListener {
+            d.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.parseColor("#1976D2"))
+            d.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.parseColor("#757575"))
+        }
+        d.show()
     }
 
-    // ==========================================
-    // 🛠️ MÉTODOS AUXILIARES DE NORMALIZACIÓN
-    // ==========================================
     private fun normalizarTexto(texto: String): String {
         val normalizado = Normalizer.normalize(texto, Normalizer.Form.NFD)
         val sinAcentos = Regex("\\p{InCombiningDiacriticalMarks}+").replace(normalizado, "")

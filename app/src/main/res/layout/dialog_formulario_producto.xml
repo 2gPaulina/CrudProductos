@@ -1,253 +1,203 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:background="#FFFFFF">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:padding="20dp"
+        android:background="#FFFFFF">
 
+        <!-- Título Principal en Azul Oscuro -->
         <TextView
             android:id="@+id/tvTituloFormulario"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Registrar Producto"
-            android:textColor="#1E293B"
-            android:textSize="20sp"
+            android:textSize="22sp"
             android:textStyle="bold"
-            android:layout_marginBottom="16dp"/>
+            android:textColor="#0D47A1"
+            android:gravity="center"
+            android:layout_marginBottom="12dp" />
 
-        <!-- ──────── SECCIÓN 1: CÓDIGO Y NOMBRE ──────── -->
+        <!-- Línea divisora decorativa en Azul Primario -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="#1976D2"
+            android:layout_marginBottom="18dp" />
+
+        <!-- Fila: Código de Barras + Botón de Escáner Azul -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:layout_marginBottom="12dp">
+            android:gravity="center_vertical"
+            android:layout_marginBottom="14dp">
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            <EditText
+                android:id="@+id/etCodigoForm"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                app:boxCornerRadiusBottomEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxStrokeColor="#0284C7">
+                android:hint="Código de Barras (13 dígitos) *"
+                android:textColor="#1E293B"
+                android:textColorHint="#64748B"
+                android:inputType="number"
+                android:maxLength="13" />
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etCodigoForm"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Código de Barras *"
-                    android:inputType="text" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- 📷 BOTÓN DE CÁMARA PARA ESCANEAR -->
             <ImageButton
                 android:id="@+id/btnEscanearFormulario"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_marginStart="8dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Escanear con cámara"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="10dp"
+                android:background="#1976D2"
                 android:src="@android:drawable/ic_menu_camera"
-                app:tint="#0284C7" />
+                android:tint="#FFFFFF"
+                android:contentDescription="Escanear Código" />
         </LinearLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        <!-- Nombre del Producto -->
+        <EditText
+            android:id="@+id/etNombreForm"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            app:boxCornerRadiusBottomEnd="12dp"
-            app:boxCornerRadiusBottomStart="12dp"
-            app:boxCornerRadiusTopEnd="12dp"
-            app:boxCornerRadiusTopStart="12dp"
-            app:boxStrokeColor="#0284C7">
+            android:hint="Nombre del Producto *"
+            android:textColor="#1E293B"
+            android:textColorHint="#64748B"
+            android:layout_marginBottom="14dp" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etNombreForm"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Nombre del Producto *"
-                android:inputType="textPersonName" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        <!-- Descripción -->
+        <EditText
+            android:id="@+id/etDescForm"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            app:boxCornerRadiusBottomEnd="12dp"
-            app:boxCornerRadiusBottomStart="12dp"
-            app:boxCornerRadiusTopEnd="12dp"
-            app:boxCornerRadiusTopStart="12dp"
-            app:boxStrokeColor="#0284C7">
+            android:hint="Descripción"
+            android:textColor="#1E293B"
+            android:textColorHint="#64748B"
+            android:layout_marginBottom="14dp" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etDescForm"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Descripción"
-                android:inputType="textMultiLine" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- ──────── SECCIÓN 2: PRECIOS Y STOCK ──────── -->
+        <!-- Precios de Compra y Venta -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="12dp">
+            android:layout_marginBottom="14dp">
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            <EditText
+                android:id="@+id/etPrecioCompraForm"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="6dp"
-                app:boxCornerRadiusBottomEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxStrokeColor="#0284C7">
+                android:hint="P. Compra ($) *"
+                android:textColor="#1E293B"
+                android:textColorHint="#64748B"
+                android:inputType="numberDecimal"
+                android:maxLength="7" />
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etPrecioCompraForm"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="P. Compra ($) *"
-                    android:inputType="numberDecimal" />
-            </com.google.android.material.textfield.TextInputLayout>
+            <Space
+                android:layout_width="12dp"
+                android:layout_height="1dp" />
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            <EditText
+                android:id="@+id/etPrecioVentaForm"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="6dp"
-                app:boxCornerRadiusBottomEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxStrokeColor="#0284C7">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etPrecioVentaForm"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="P. Venta ($) *"
-                    android:inputType="numberDecimal" />
-            </com.google.android.material.textfield.TextInputLayout>
+                android:hint="P. Venta ($) *"
+                android:textColor="#1E293B"
+                android:textColorHint="#64748B"
+                android:inputType="numberDecimal"
+                android:maxLength="7" />
         </LinearLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        <!-- Stock / Cantidad -->
+        <EditText
+            android:id="@+id/etStockForm"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:boxCornerRadiusBottomEnd="12dp"
-            app:boxCornerRadiusBottomStart="12dp"
-            app:boxCornerRadiusTopEnd="12dp"
-            app:boxCornerRadiusTopStart="12dp"
-            app:boxStrokeColor="#0284C7">
+            android:hint="Cantidad en Stock *"
+            android:textColor="#1E293B"
+            android:textColorHint="#64748B"
+            android:inputType="number"
+            android:maxLength="4"
+            android:layout_marginBottom="14dp" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etStockForm"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Cantidad en Stock *"
-                android:inputType="number" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- ──────── SECCIÓN 3: CATEGORÍA Y MARCA ──────── -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Clasificación"
-            android:textColor="#64748B"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="4dp"/>
-
-        <!-- Categoría -->
+        <!-- Fila: Categoría + Botón Azul -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:layout_marginBottom="12dp">
+            android:layout_marginBottom="14dp">
 
             <Spinner
                 android:id="@+id/spinnerCategoriaForm"
                 android:layout_width="0dp"
-                android:layout_height="48dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1" />
 
             <ImageButton
                 android:id="@+id/btnConfigCategoria"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="10dp"
+                android:background="#1976D2"
                 android:src="@android:drawable/ic_menu_manage"
-                app:tint="#0284C7" />
+                android:tint="#FFFFFF"
+                android:contentDescription="Gestionar Categoría" />
         </LinearLayout>
 
-        <!-- Marca -->
+        <!-- Fila: Marca + Botón Azul -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
+            android:gravity="center_vertical"
+            android:layout_marginBottom="14dp">
 
             <Spinner
                 android:id="@+id/spinnerMarcaForm"
                 android:layout_width="0dp"
-                android:layout_height="48dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1" />
 
             <ImageButton
                 android:id="@+id/btnConfigMarca"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="10dp"
+                android:background="#1976D2"
                 android:src="@android:drawable/ic_menu_manage"
-                app:tint="#0284C7" />
+                android:tint="#FFFFFF"
+                android:contentDescription="Gestionar Marca" />
         </LinearLayout>
 
-        <!-- ──────── SECCIÓN 4: PROVEEDOR Y DISTRIBUIDOR (AUTO) ──────── -->
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        <!-- Proveedor (Lectura / Inhabilitado) -->
+        <EditText
+            android:id="@+id/etProveedorForm"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:enabled="false">
+            android:hint="Proveedor (Cargado por Marca)"
+            android:textColor="#475569"
+            android:textColorHint="#94A3B8"
+            android:enabled="false"
+            android:layout_marginBottom="14dp" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etProveedorForm"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Proveedor (Automático)" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        <!-- Distribuidor (Lectura / Inhabilitado) -->
+        <EditText
+            android:id="@+id/etDistribuidorForm"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:enabled="false">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etDistribuidorForm"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Distribuidor (Automático)" />
-        </com.google.android.material.textfield.TextInputLayout>
+            android:hint="Distribuidor (Cargado por Marca)"
+            android:textColor="#475569"
+            android:textColorHint="#94A3B8"
+            android:enabled="false"
+            android:layout_marginBottom="14dp" />
 
     </LinearLayout>
 </ScrollView>
