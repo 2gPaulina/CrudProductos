@@ -31,7 +31,7 @@ class Usuario : AppCompatActivity() {
     private lateinit var searchView: SearchView
     private lateinit var btnVerCuenta: Button
     private lateinit var btnCerrarSesion: Button
-    private lateinit var adapter: ProductoAdapter
+    private lateinit var adapter: ProductoUsuarioAdapter // Corregido a ProductoUsuarioAdapter
 
     private var listaProductos = mutableListOf<Producto>()
     private val carrito = mutableListOf<ItemCarrito>()
@@ -66,8 +66,8 @@ class Usuario : AppCompatActivity() {
             cerrarSesion()
         }
 
-        // Configuración del Adaptador de Productos (Al presionar "Agregar")
-        adapter = ProductoAdapter(listaProductos) { producto ->
+        // Configuración del Adaptador de Productos (Usando ProductoUsuarioAdapter)
+        adapter = ProductoUsuarioAdapter(listaProductos) { producto ->
             mostrarDialogoSeleccionarCantidad(producto)
         }
         recyclerView.adapter = adapter

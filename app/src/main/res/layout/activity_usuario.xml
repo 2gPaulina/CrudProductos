@@ -5,17 +5,17 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F7FA"
+    android:background="#F8FAFC"
     tools:context=".Usuario">
 
-    <!-- 🔵 ENCABEZADO SUPERIOR -->
+    <!-- ⚪ ENCABEZADO SUPERIOR BLANCO -->
     <androidx.cardview.widget.CardView
         android:id="@+id/headerCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardBackgroundColor="#1E293B"
+        app:cardBackgroundColor="#FFFFFF"
         app:cardCornerRadius="0dp"
-        app:cardElevation="6dp"
+        app:cardElevation="2dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -24,15 +24,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingHorizontal="20dp"
-            android:paddingTop="24dp"
-            android:paddingBottom="20dp">
+            android:paddingTop="20dp"
+            android:paddingBottom="16dp">
 
             <TextView
                 android:id="@+id/tvTitulo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Punto de Venta"
-                android:textColor="#FFFFFF"
+                android:textColor="#1E293B"
                 android:textSize="22sp"
                 android:textStyle="bold"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -41,14 +41,14 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCerrarSesion"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:backgroundTint="#EF4444"
-                android:paddingHorizontal="14dp"
+                android:paddingHorizontal="12dp"
                 android:text="Salir"
-                android:textColor="#FFFFFF"
-                android:textSize="12sp"
-                app:cornerRadius="20dp"
+                android:textColor="#EF4444"
+                android:textSize="14sp"
+                android:textStyle="bold"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -65,7 +65,7 @@
         android:layout_marginTop="16dp"
         app:cardBackgroundColor="#FFFFFF"
         app:cardCornerRadius="12dp"
-        app:cardElevation="4dp"
+        app:cardElevation="2dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/headerCard">
@@ -102,7 +102,7 @@
         android:layout_margin="16dp"
         app:cardBackgroundColor="#0284C7"
         app:cardCornerRadius="16dp"
-        app:cardElevation="8dp"
+        app:cardElevation="6dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">

@@ -1,74 +1,112 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#FFFFFF">
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
+    <!-- ⚪ FORMULARIO CENTRADO -->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#F8F9FA"
-        android:gravity="center"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="28dp"
         android:orientation="vertical"
-        android:padding="32dp">
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
+        <!-- 📦 ÍCONO DE BIENVENIDA -->
+        <TextView
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_gravity="center"
+            android:layout_marginBottom="16dp"
+            android:background="#F0F9FF"
+            android:gravity="center"
+            android:text="📦"
+            android:textSize="32sp" />
+
+        <!-- 🏷️ TÍTULO -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="SISTEMA DE INVENTARIO"
-            android:textColor="#1A237E"
+            android:layout_gravity="center"
+            android:text="Punto de Venta"
+            android:textColor="#1E293B"
             android:textSize="24sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp"/>
+            android:textStyle="bold" />
 
+        <!-- 📄 SUBTÍTULO -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Inicie sesión para continuar"
-            android:textColor="#5F6368"
-            android:textSize="14sp"
-            android:layout_marginBottom="32dp"/>
+            android:layout_gravity="center"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="32dp"
+            android:text="Inicia sesión con tus credenciales"
+            android:textColor="#64748B"
+            android:textSize="14sp" />
 
+        <!-- ✉️ CAMPO: CORREO -->
         <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            app:boxStrokeColor="#1A237E"
-            app:hintTextColor="#1A237E"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxStrokeColor="#0284C7"
+            app:hintTextColor="#0284C7">
+
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etCorreo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Correo Electrónico"
-                android:inputType="textEmailAddress"/>
+                android:inputType="textEmailAddress"
+                android:textColor="#1E293B" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- 🔒 CAMPO: CONTRASEÑA -->
         <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            app:boxStrokeColor="#1A237E"
-            app:hintTextColor="#1A237E"
+            android:layout_marginBottom="28dp"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxStrokeColor="#0284C7"
+            app:hintTextColor="#0284C7"
             app:passwordToggleEnabled="true"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+            app:passwordToggleTint="#64748B">
+
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etPassword"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Contraseña"
-                android:inputType="textPassword"/>
+                android:inputType="textPassword"
+                android:textColor="#1E293B" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- 🔘 BOTÓN INGRESAR -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogin"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="INGRESAR AL SISTEMA"
+            android:layout_height="54dp"
+            android:backgroundTint="#0284C7"
+            android:text="Ingresar al Sistema"
+            android:textColor="#FFFFFF"
             android:textSize="16sp"
             android:textStyle="bold"
-            app:backgroundTint="#1A237E"
-            app:cornerRadius="8dp" />
+            app:cornerRadius="14dp"
+            app:elevation="2dp" />
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
