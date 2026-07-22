@@ -2,6 +2,7 @@ package com.example.crudproductos
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.InputFilter
 import android.text.InputType
 import android.view.Gravity
 import android.view.View
@@ -115,7 +116,11 @@ class ProductosActivity : AppCompatActivity() {
         scrollView.addView(container)
 
         // 1. Campos Básicos
-        val etCodigo = crearEditTextPlano("Código de Barras", productoExistente?._id, !esEdicion)
+        // Código de barras: solo números y máximo 13 dígitos
+        val etCodigo = crearEditTextPlano("Código de Barras (13 dígitos)", productoExistente?._id, !esEdicion, esEntero = true).apply {
+            filters = arrayOf(InputFilter.LengthFilter(13))
+        }
+
         val etNombre = crearEditTextPlano("Nombre del Producto", productoExistente?.nombre)
         val etDesc = crearEditTextPlano("Descripción", productoExistente?.descripcion)
 
@@ -129,15 +134,23 @@ class ProductosActivity : AppCompatActivity() {
             ).apply { setMargins(0, 0, 0, 16) }
         }
 
-        val etPrecioCompra = crearEditTextPlano("P. Compra ($)", productoExistente?.precio_compra?.toString(), esDecimal = true, layoutWeight = 1f)
-        val etPrecioVenta = crearEditTextPlano("P. Venta ($)", productoExistente?.precio_venta?.toString(), esDecimal = true, layoutWeight = 1f)
+        // ⚡ Filtro de Precios: Máximo 7 caracteres (ej: 9999.99 = 4 enteros + punto + 2 decimales)
+        val etPrecioCompra = crearEditTextPlano("P. Compra ($)", productoExistente?.precio_compra?.toString(), esDecimal = true, layoutWeight = 1f).apply {
+            filters = arrayOf(InputFilter.LengthFilter(4))
+        }
+        val etPrecioVenta = crearEditTextPlano("P. Venta ($)", productoExistente?.precio_venta?.toString(), esDecimal = true, layoutWeight = 1f).apply {
+            filters = arrayOf(InputFilter.LengthFilter(4))
+        }
 
         rowPrecios.addView(etPrecioCompra)
         val space = View(this).apply { layoutParams = LinearLayout.LayoutParams(24, 1) }
         rowPrecios.addView(space)
         rowPrecios.addView(etPrecioVenta)
 
-        val etStock = crearEditTextPlano("Cantidad en Stock", productoExistente?.inventario?.toString(), esEntero = true)
+        // ⚡ Filtro de Stock: Máximo 4 dígitos (ej: 9999)
+        val etStock = crearEditTextPlano("Cantidad en Stock", productoExistente?.inventario?.toString(), esEntero = true).apply {
+            filters = arrayOf(InputFilter.LengthFilter(4))
+        }
 
         container.addView(etCodigo)
         container.addView(etNombre)
@@ -194,14 +207,13 @@ class ProductosActivity : AppCompatActivity() {
         val (rowMarca, spinnerMarca, btnMarca) = crearDesplegableSpinnerConBoton()
         container.addView(rowMarca)
 
-        // 4. CAMPOS DE PROVEEDOR Y DISTRIBUIDOR (Auto-completados de solo lectura)
+        // 4. CAMPOS DE PROVEEDOR Y DISTRIBUIDOR
         val etProveedor = crearEditTextPlano("Proveedor (Cargado por Marca)", null, habilitado = false)
         val etDistribuidor = crearEditTextPlano("Distribuidor (Cargado por Marca)", null, habilitado = false)
 
         container.addView(etProveedor)
         container.addView(etDistribuidor)
 
-        // Lógica para actualizar el adaptador de marcas y detectar el cambio de selección
         val updateAdapterMarca = {
             val nombresMarcas = mutableListOf("Seleccionar Marca *")
             nombresMarcas.addAll(listaMarcas.map { it.nombre })
@@ -214,7 +226,6 @@ class ProductosActivity : AppCompatActivity() {
         }
         updateAdapterMarca()
 
-        // ⚡ LISTENER: Cuando cambia la Marca, actualiza Proveedor y Distribuidor en automático
         spinnerMarca.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 if (position > 0) {
@@ -285,21 +296,27 @@ class ProductosActivity : AppCompatActivity() {
                 val marcaStr = if (spinnerMarca.selectedItemPosition > 0) spinnerMarca.selectedItem.toString() else ""
                 val provStr = etProveedor.text.toString().trim()
 
-                // VALIDACIONES
-                if (codigoStr.isEmpty()) { etCodigo.error = "Requerido"; return@setOnClickListener }
+                // VALIDACIÓN CÓDIGO DE BARRAS
+                if (codigoStr.isEmpty()) {
+                    etCodigo.error = "Requerido"
+                    return@setOnClickListener
+                }
+                if (codigoStr.length != 13) {
+                    etCodigo.error = "Debe tener exactamente 13 dígitos"
+                    return@setOnClickListener
+                }
+
                 if (nombreStr.isEmpty()) { etNombre.error = "Requerido"; return@setOnClickListener }
 
-                // ⚡ VALIDACIÓN DE NOMBRES SIMILARES O DUPLICADOS
+                // VALIDACIÓN DE NOMBRES SIMILARES O DUPLICADOS
                 val nombreIngresadoLimpio = normalizarTexto(nombreStr)
                 val productoSimilar = listaProductos.find { prod ->
                     val nombreExistenteLimpio = normalizarTexto(prod.nombre)
                     val esMismoNombre = nombreExistenteLimpio == nombreIngresadoLimpio
 
                     if (esEdicion) {
-                        // En edición: Falla si existe OTRO producto similar con distinto ID
                         esMismoNombre && prod._id != productoExistente?._id
                     } else {
-                        // En creación: Falla si existe CUALQUIER producto similar
                         esMismoNombre
                     }
                 }
@@ -310,13 +327,39 @@ class ProductosActivity : AppCompatActivity() {
                     return@setOnClickListener
                 }
 
+                // ⚡ VALIDACIONES DE PRECIOS (Límite máximo 9999)
                 val precioCompra = pCompraStr.toDoubleOrNull()
-                if (precioCompra == null || precioCompra <= 0) { etPrecioCompra.error = "Precio inválido"; return@setOnClickListener }
+                if (precioCompra == null || precioCompra <= 0) {
+                    etPrecioCompra.error = "Precio inválido"
+                    return@setOnClickListener
+                }
+                if (precioCompra > 9999.99) {
+                    etPrecioCompra.error = "No debe exceder $9,999"
+                    return@setOnClickListener
+                }
 
                 val precioVenta = pVentaStr.toDoubleOrNull()
-                if (precioVenta == null || precioVenta <= 0) { etPrecioVenta.error = "Precio inválido"; return@setOnClickListener }
+                if (precioVenta == null || precioVenta <= 0) {
+                    etPrecioVenta.error = "Precio inválido"
+                    return@setOnClickListener
+                }
+                if (precioVenta > 9999.99) {
+                    etPrecioVenta.error = "No debe exceder $9,999"
+                    return@setOnClickListener
+                }
 
+                // ⚡ VALIDACIÓN DE STOCK (Límite máximo 9999)
                 if (stockStr.isEmpty()) { etStock.error = "Requerido"; return@setOnClickListener }
+                val stockInt = stockStr.toIntOrNull()
+                if (stockInt == null || stockInt < 0) {
+                    etStock.error = "Stock inválido"
+                    return@setOnClickListener
+                }
+                if (stockInt > 9999) {
+                    etStock.error = "Máximo 9,999 unidades"
+                    return@setOnClickListener
+                }
+
                 if (catStr.isEmpty() || catStr == "Seleccionar Categoría *") { Toast.makeText(this, "Selecciona una Categoría", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
                 if (marcaStr.isEmpty() || marcaStr == "Seleccionar Marca *") { Toast.makeText(this, "Selecciona una Marca", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
 
@@ -324,18 +367,18 @@ class ProductosActivity : AppCompatActivity() {
                     id = "PROV-001",
                     nombre = if (provStr.isEmpty()) "Proveedor General" else provStr
                 )
-                // Creamos el objeto del producto usando los datos de la marca seleccionada
+
                 val prodData = Producto(
                     _id = codigoStr,
                     nombre = nombreStr,
                     descripcion = if (descStr.isEmpty()) "Sin descripción" else descStr,
                     precio_compra = precioCompra,
                     precio_venta = precioVenta,
-                    inventario = stockStr.toIntOrNull() ?: 0,
+                    inventario = stockInt,
                     categoria_nombre = catStr,
                     marca_nombre = marcaStr,
                     proveedor = proveedorObjeto,
-                    fecha_creacion = "2026-01-01T00:00:00", // Formato ISO si FastAPI espera fecha
+                    fecha_creacion = "2026-01-01T00:00:00",
                     fecha_actualizacion = "2026-01-01T00:00:00",
                     creado_por = "admin",
                     activo = true
@@ -471,7 +514,7 @@ class ProductosActivity : AppCompatActivity() {
     }
 
     // ==========================================
-    // 🏷️ MODALES PARA MARCAS (CAMPOS DE TEXTO MANUALES)
+    // 🏷️ MODALES PARA MARCAS
     // ==========================================
     private fun mostrarDialogoCrearMarca(onExito: () -> Unit) {
         val layout = LinearLayout(this).apply {
