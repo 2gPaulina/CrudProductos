@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.text.Normalizer
 
 class ProductosActivity : AppCompatActivity() {
 
@@ -105,9 +106,7 @@ class ProductosActivity : AppCompatActivity() {
     private fun mostrarFormularioProducto(productoExistente: Producto?) {
         val esEdicion = productoExistente != null
 
-        val scrollView = ScrollView(this).apply {
-            isFillViewport = true
-        }
+        val scrollView = ScrollView(this).apply { isFillViewport = true }
 
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -115,7 +114,7 @@ class ProductosActivity : AppCompatActivity() {
         }
         scrollView.addView(container)
 
-        // Inputs planos con línea inferior
+        // 1. Campos Básicos
         val etCodigo = crearEditTextPlano("Código de Barras", productoExistente?._id, !esEdicion)
         val etNombre = crearEditTextPlano("Nombre del Producto", productoExistente?.nombre)
         val etDesc = crearEditTextPlano("Descripción", productoExistente?.descripcion)
@@ -146,14 +145,12 @@ class ProductosActivity : AppCompatActivity() {
         container.addView(rowPrecios)
         container.addView(etStock)
 
-        // --- SPINNER CATEGORÍA ---
+        // 2. SPINNER CATEGORÍA
         val (rowCategoria, spinnerCat, btnCat) = crearDesplegableSpinnerConBoton()
-
         val updateAdapterCat = {
             val nombresCat = mutableListOf("Seleccionar Categoría *")
             nombresCat.addAll(listaCategorias.map { it.nombre })
-            val adapterCat = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, nombresCat)
-            spinnerCat.adapter = adapterCat
+            spinnerCat.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, nombresCat)
 
             if (esEdicion && productoExistente?.categoria_nombre != null) {
                 val pos = nombresCat.indexOf(productoExistente.categoria_nombre)
@@ -175,16 +172,13 @@ class ProductosActivity : AppCompatActivity() {
                         val catNombre = spinnerCat.selectedItem?.toString() ?: ""
                         val catObj = listaCategorias.find { it.nombre == catNombre }
                         if (catObj != null) mostrarDialogoEditarCategoria(catObj) { cargarCategoriasDesdeApi { updateAdapterCat() } }
-                        else Toast.makeText(this, "Selecciona una categoría válida primero", Toast.LENGTH_SHORT).show()
                     }
                     "🗑️ Eliminar Seleccionada" -> {
                         val catNombre = spinnerCat.selectedItem?.toString() ?: ""
                         if (catNombre.isNotEmpty() && catNombre != "Seleccionar Categoría *") {
                             RetrofitClient.instance.eliminarCategoria(tokenFormateado, catNombre).enqueue(object : Callback<Void> {
                                 override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                                    if (response.isSuccessful) {
-                                        cargarCategoriasDesdeApi { updateAdapterCat() }
-                                    }
+                                    if (response.isSuccessful) cargarCategoriasDesdeApi { updateAdapterCat() }
                                 }
                                 override fun onFailure(call: Call<Void>, t: Throwable) {}
                             })
@@ -196,14 +190,22 @@ class ProductosActivity : AppCompatActivity() {
             popup.show()
         }
 
-        // --- SPINNER MARCA ---
+        // 3. SPINNER MARCA
         val (rowMarca, spinnerMarca, btnMarca) = crearDesplegableSpinnerConBoton()
+        container.addView(rowMarca)
 
+        // 4. CAMPOS DE PROVEEDOR Y DISTRIBUIDOR (Auto-completados de solo lectura)
+        val etProveedor = crearEditTextPlano("Proveedor (Cargado por Marca)", null, habilitado = false)
+        val etDistribuidor = crearEditTextPlano("Distribuidor (Cargado por Marca)", null, habilitado = false)
+
+        container.addView(etProveedor)
+        container.addView(etDistribuidor)
+
+        // Lógica para actualizar el adaptador de marcas y detectar el cambio de selección
         val updateAdapterMarca = {
             val nombresMarcas = mutableListOf("Seleccionar Marca *")
             nombresMarcas.addAll(listaMarcas.map { it.nombre })
-            val adapterMarca = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, nombresMarcas)
-            spinnerMarca.adapter = adapterMarca
+            spinnerMarca.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, nombresMarcas)
 
             if (esEdicion && productoExistente?.marca_nombre != null) {
                 val pos = nombresMarcas.indexOf(productoExistente.marca_nombre)
@@ -211,7 +213,25 @@ class ProductosActivity : AppCompatActivity() {
             }
         }
         updateAdapterMarca()
-        container.addView(rowMarca)
+
+        // ⚡ LISTENER: Cuando cambia la Marca, actualiza Proveedor y Distribuidor en automático
+        spinnerMarca.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                if (position > 0) {
+                    val marcaSeleccionadaNombre = parent?.getItemAtPosition(position).toString()
+                    val marcaObjeto = listaMarcas.find { it.nombre == marcaSeleccionadaNombre }
+
+                    if (marcaObjeto != null) {
+                        etProveedor.setText(marcaObjeto.proveedor ?: "Sin Proveedor asignado")
+                        etDistribuidor.setText(marcaObjeto.distribuidor ?: "Sin Distribuidor asignado")
+                    }
+                } else {
+                    etProveedor.setText("")
+                    etDistribuidor.setText("")
+                }
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
 
         btnMarca.setOnClickListener { view ->
             val popup = PopupMenu(this, view)
@@ -225,16 +245,13 @@ class ProductosActivity : AppCompatActivity() {
                         val marcaNombre = spinnerMarca.selectedItem?.toString() ?: ""
                         val marcaObj = listaMarcas.find { it.nombre == marcaNombre }
                         if (marcaObj != null) mostrarDialogoEditarMarca(marcaObj) { cargarMarcasDesdeApi { updateAdapterMarca() } }
-                        else Toast.makeText(this, "Selecciona una marca válida primero", Toast.LENGTH_SHORT).show()
                     }
                     "🗑️ Eliminar Seleccionada" -> {
                         val marcaNombre = spinnerMarca.selectedItem?.toString() ?: ""
                         if (marcaNombre.isNotEmpty() && marcaNombre != "Seleccionar Marca *") {
                             RetrofitClient.instance.eliminarMarca(tokenFormateado, marcaNombre).enqueue(object : Callback<Void> {
                                 override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                                    if (response.isSuccessful) {
-                                        cargarMarcasDesdeApi { updateAdapterMarca() }
-                                    }
+                                    if (response.isSuccessful) cargarMarcasDesdeApi { updateAdapterMarca() }
                                 }
                                 override fun onFailure(call: Call<Void>, t: Throwable) {}
                             })
@@ -246,6 +263,7 @@ class ProductosActivity : AppCompatActivity() {
             popup.show()
         }
 
+        // 5. DIÁLOGO Y GUARDADO
         val dialog = AlertDialog.Builder(this)
             .setTitle(if (esEdicion) "Modificar Producto" else "Registrar Producto")
             .setView(scrollView)
@@ -265,32 +283,48 @@ class ProductosActivity : AppCompatActivity() {
 
                 val catStr = if (spinnerCat.selectedItemPosition > 0) spinnerCat.selectedItem.toString() else ""
                 val marcaStr = if (spinnerMarca.selectedItemPosition > 0) spinnerMarca.selectedItem.toString() else ""
+                val provStr = etProveedor.text.toString().trim()
 
                 // VALIDACIONES
                 if (codigoStr.isEmpty()) { etCodigo.error = "Requerido"; return@setOnClickListener }
-                if (codigoStr.length > 50) { etCodigo.error = "Máximo 50 caracteres"; return@setOnClickListener }
-
                 if (nombreStr.isEmpty()) { etNombre.error = "Requerido"; return@setOnClickListener }
-                if (nombreStr.length > 50) { etNombre.error = "Máximo 50 caracteres"; return@setOnClickListener }
 
-                if (descStr.length > 50) { etDesc.error = "Máximo 50 caracteres"; return@setOnClickListener }
+                // ⚡ VALIDACIÓN DE NOMBRES SIMILARES O DUPLICADOS
+                val nombreIngresadoLimpio = normalizarTexto(nombreStr)
+                val productoSimilar = listaProductos.find { prod ->
+                    val nombreExistenteLimpio = normalizarTexto(prod.nombre)
+                    val esMismoNombre = nombreExistenteLimpio == nombreIngresadoLimpio
+
+                    if (esEdicion) {
+                        // En edición: Falla si existe OTRO producto similar con distinto ID
+                        esMismoNombre && prod._id != productoExistente?._id
+                    } else {
+                        // En creación: Falla si existe CUALQUIER producto similar
+                        esMismoNombre
+                    }
+                }
+
+                if (productoSimilar != null) {
+                    etNombre.error = "Ya existe un producto similar: '${productoSimilar.nombre}'"
+                    Toast.makeText(this@ProductosActivity, "El nombre del producto ya está en uso o es muy similar", Toast.LENGTH_LONG).show()
+                    return@setOnClickListener
+                }
 
                 val precioCompra = pCompraStr.toDoubleOrNull()
-                if (precioCompra == null || precioCompra <= 0) {
-                    etPrecioCompra.error = "Ingresa un precio válido"
-                    return@setOnClickListener
-                }
+                if (precioCompra == null || precioCompra <= 0) { etPrecioCompra.error = "Precio inválido"; return@setOnClickListener }
 
                 val precioVenta = pVentaStr.toDoubleOrNull()
-                if (precioVenta == null || precioVenta <= 0) {
-                    etPrecioVenta.error = "Ingresa un precio válido"
-                    return@setOnClickListener
-                }
+                if (precioVenta == null || precioVenta <= 0) { etPrecioVenta.error = "Precio inválido"; return@setOnClickListener }
 
                 if (stockStr.isEmpty()) { etStock.error = "Requerido"; return@setOnClickListener }
                 if (catStr.isEmpty() || catStr == "Seleccionar Categoría *") { Toast.makeText(this, "Selecciona una Categoría", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
                 if (marcaStr.isEmpty() || marcaStr == "Seleccionar Marca *") { Toast.makeText(this, "Selecciona una Marca", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
 
+                val proveedorObjeto = Proveedor(
+                    id = "PROV-001",
+                    nombre = if (provStr.isEmpty()) "Proveedor General" else provStr
+                )
+                // Creamos el objeto del producto usando los datos de la marca seleccionada
                 val prodData = Producto(
                     _id = codigoStr,
                     nombre = nombreStr,
@@ -300,8 +334,11 @@ class ProductosActivity : AppCompatActivity() {
                     inventario = stockStr.toIntOrNull() ?: 0,
                     categoria_nombre = catStr,
                     marca_nombre = marcaStr,
-                    proveedor = com.example.crudproductos.Proveedor(nombre = "Proveedor General"),
-                    fecha_creacion = "", fecha_actualizacion = "", creado_por = "", activo = true
+                    proveedor = proveedorObjeto,
+                    fecha_creacion = "2026-01-01T00:00:00", // Formato ISO si FastAPI espera fecha
+                    fecha_actualizacion = "2026-01-01T00:00:00",
+                    creado_por = "admin",
+                    activo = true
                 )
 
                 if (esEdicion) {
@@ -533,5 +570,14 @@ class ProductosActivity : AppCompatActivity() {
             }
             .setNegativeButton("Cancelar", null)
             .show()
+    }
+
+    // ==========================================
+    // 🛠️ MÉTODOS AUXILIARES DE NORMALIZACIÓN
+    // ==========================================
+    private fun normalizarTexto(texto: String): String {
+        val normalizado = Normalizer.normalize(texto, Normalizer.Form.NFD)
+        val sinAcentos = Regex("\\p{InCombiningDiacriticalMarks}+").replace(normalizado, "")
+        return sinAcentos.lowercase().trim().replace(Regex("\\s+"), " ")
     }
 }
