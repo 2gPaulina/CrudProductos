@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -116,7 +117,6 @@ class ProductosActivity : AppCompatActivity() {
         scrollView.addView(container)
 
         // 1. Campos Básicos
-        // Código de barras: solo números y máximo 13 dígitos
         val etCodigo = crearEditTextPlano("Código de Barras (13 dígitos)", productoExistente?._id, !esEdicion, esEntero = true).apply {
             filters = arrayOf(InputFilter.LengthFilter(13))
         }
@@ -134,12 +134,11 @@ class ProductosActivity : AppCompatActivity() {
             ).apply { setMargins(0, 0, 0, 16) }
         }
 
-        // ⚡ Filtro de Precios: Máximo 7 caracteres (ej: 9999.99 = 4 enteros + punto + 2 decimales)
         val etPrecioCompra = crearEditTextPlano("P. Compra ($)", productoExistente?.precio_compra?.toString(), esDecimal = true, layoutWeight = 1f).apply {
-            filters = arrayOf(InputFilter.LengthFilter(4))
+            filters = arrayOf(InputFilter.LengthFilter(7))
         }
         val etPrecioVenta = crearEditTextPlano("P. Venta ($)", productoExistente?.precio_venta?.toString(), esDecimal = true, layoutWeight = 1f).apply {
-            filters = arrayOf(InputFilter.LengthFilter(4))
+            filters = arrayOf(InputFilter.LengthFilter(7))
         }
 
         rowPrecios.addView(etPrecioCompra)
@@ -147,7 +146,6 @@ class ProductosActivity : AppCompatActivity() {
         rowPrecios.addView(space)
         rowPrecios.addView(etPrecioVenta)
 
-        // ⚡ Filtro de Stock: Máximo 4 dígitos (ej: 9999)
         val etStock = crearEditTextPlano("Cantidad en Stock", productoExistente?.inventario?.toString(), esEntero = true).apply {
             filters = arrayOf(InputFilter.LengthFilter(4))
         }
@@ -189,12 +187,38 @@ class ProductosActivity : AppCompatActivity() {
                     "🗑️ Eliminar Seleccionada" -> {
                         val catNombre = spinnerCat.selectedItem?.toString() ?: ""
                         if (catNombre.isNotEmpty() && catNombre != "Seleccionar Categoría *") {
-                            RetrofitClient.instance.eliminarCategoria(tokenFormateado, catNombre).enqueue(object : Callback<Void> {
-                                override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                                    if (response.isSuccessful) cargarCategoriasDesdeApi { updateAdapterCat() }
-                                }
-                                override fun onFailure(call: Call<Void>, t: Throwable) {}
-                            })
+
+                            // ⚡ VALIDACIÓN FRONTEND: Evitar dejar productos sin categoría válida
+                            val tieneProductosAsociados = listaProductos.any { prod ->
+                                normalizarTexto(prod.categoria_nombre) == normalizarTexto(catNombre)
+                            }
+
+                            if (tieneProductosAsociados) {
+                                AlertDialog.Builder(this)
+                                    .setTitle("Acción denegada")
+                                    .setMessage("No se puede eliminar la categoría '$catNombre' porque hay productos registrados asociados a ella.")
+                                    .setPositiveButton("Entendido", null)
+                                    .show()
+                            } else {
+                                AlertDialog.Builder(this)
+                                    .setTitle("Eliminar Categoría")
+                                    .setMessage("¿Deseas eliminar la categoría '$catNombre'?")
+                                    .setPositiveButton("Eliminar") { _, _ ->
+                                        RetrofitClient.instance.eliminarCategoria(tokenFormateado, catNombre).enqueue(object : Callback<Void> {
+                                            override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                                                if (response.isSuccessful) {
+                                                    Toast.makeText(this@ProductosActivity, "Categoría eliminada", Toast.LENGTH_SHORT).show()
+                                                    cargarCategoriasDesdeApi { updateAdapterCat() }
+                                                } else {
+                                                    mostrarMensajeErrorBackend(response)
+                                                }
+                                            }
+                                            override fun onFailure(call: Call<Void>, t: Throwable) {}
+                                        })
+                                    }
+                                    .setNegativeButton("Cancelar", null)
+                                    .show()
+                            }
                         }
                     }
                 }
@@ -260,12 +284,38 @@ class ProductosActivity : AppCompatActivity() {
                     "🗑️ Eliminar Seleccionada" -> {
                         val marcaNombre = spinnerMarca.selectedItem?.toString() ?: ""
                         if (marcaNombre.isNotEmpty() && marcaNombre != "Seleccionar Marca *") {
-                            RetrofitClient.instance.eliminarMarca(tokenFormateado, marcaNombre).enqueue(object : Callback<Void> {
-                                override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                                    if (response.isSuccessful) cargarMarcasDesdeApi { updateAdapterMarca() }
-                                }
-                                override fun onFailure(call: Call<Void>, t: Throwable) {}
-                            })
+
+                            // ⚡ VALIDACIÓN FRONTEND: Evitar dejar productos sin marca válida
+                            val tieneProductosAsociados = listaProductos.any { prod ->
+                                normalizarTexto(prod.marca_nombre) == normalizarTexto(marcaNombre)
+                            }
+
+                            if (tieneProductosAsociados) {
+                                AlertDialog.Builder(this)
+                                    .setTitle("Acción denegada")
+                                    .setMessage("No se puede eliminar la marca '$marcaNombre' porque hay productos registrados asociados a ella.")
+                                    .setPositiveButton("Entendido", null)
+                                    .show()
+                            } else {
+                                AlertDialog.Builder(this)
+                                    .setTitle("Eliminar Marca")
+                                    .setMessage("¿Deseas eliminar la marca '$marcaNombre'?")
+                                    .setPositiveButton("Eliminar") { _, _ ->
+                                        RetrofitClient.instance.eliminarMarca(tokenFormateado, marcaNombre).enqueue(object : Callback<Void> {
+                                            override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                                                if (response.isSuccessful) {
+                                                    Toast.makeText(this@ProductosActivity, "Marca eliminada", Toast.LENGTH_SHORT).show()
+                                                    cargarMarcasDesdeApi { updateAdapterMarca() }
+                                                } else {
+                                                    mostrarMensajeErrorBackend(response)
+                                                }
+                                            }
+                                            override fun onFailure(call: Call<Void>, t: Throwable) {}
+                                        })
+                                    }
+                                    .setNegativeButton("Cancelar", null)
+                                    .show()
+                            }
                         }
                     }
                 }
@@ -274,7 +324,7 @@ class ProductosActivity : AppCompatActivity() {
             popup.show()
         }
 
-        // 5. DIÁLOGO Y GUARDADO
+        // 5. DIÁLOGO Y GUARDADO DE PRODUCTO
         val dialog = AlertDialog.Builder(this)
             .setTitle(if (esEdicion) "Modificar Producto" else "Registrar Producto")
             .setView(scrollView)
@@ -296,7 +346,6 @@ class ProductosActivity : AppCompatActivity() {
                 val marcaStr = if (spinnerMarca.selectedItemPosition > 0) spinnerMarca.selectedItem.toString() else ""
                 val provStr = etProveedor.text.toString().trim()
 
-                // VALIDACIÓN CÓDIGO DE BARRAS
                 if (codigoStr.isEmpty()) {
                     etCodigo.error = "Requerido"
                     return@setOnClickListener
@@ -308,7 +357,7 @@ class ProductosActivity : AppCompatActivity() {
 
                 if (nombreStr.isEmpty()) { etNombre.error = "Requerido"; return@setOnClickListener }
 
-                // VALIDACIÓN DE NOMBRES SIMILARES O DUPLICADOS
+                // VALIDACIÓN DE PRODUCTO DUPLICADO O SIMILAR
                 val nombreIngresadoLimpio = normalizarTexto(nombreStr)
                 val productoSimilar = listaProductos.find { prod ->
                     val nombreExistenteLimpio = normalizarTexto(prod.nombre)
@@ -327,7 +376,6 @@ class ProductosActivity : AppCompatActivity() {
                     return@setOnClickListener
                 }
 
-                // ⚡ VALIDACIONES DE PRECIOS (Límite máximo 9999)
                 val precioCompra = pCompraStr.toDoubleOrNull()
                 if (precioCompra == null || precioCompra <= 0) {
                     etPrecioCompra.error = "Precio inválido"
@@ -348,7 +396,6 @@ class ProductosActivity : AppCompatActivity() {
                     return@setOnClickListener
                 }
 
-                // ⚡ VALIDACIÓN DE STOCK (Límite máximo 9999)
                 if (stockStr.isEmpty()) { etStock.error = "Requerido"; return@setOnClickListener }
                 val stockInt = stockStr.toIntOrNull()
                 if (stockInt == null || stockInt < 0) {
@@ -387,14 +434,24 @@ class ProductosActivity : AppCompatActivity() {
                 if (esEdicion) {
                     RetrofitClient.instance.actualizarProducto(tokenFormateado, codigoStr, prodData).enqueue(object : Callback<CrudResponse> {
                         override fun onResponse(call: Call<CrudResponse>, response: Response<CrudResponse>) {
-                            if (response.isSuccessful) { cargarProductosDesdeApi(); dialog.dismiss() }
+                            if (response.isSuccessful) {
+                                cargarProductosDesdeApi()
+                                dialog.dismiss()
+                            } else {
+                                mostrarMensajeErrorBackend(response)
+                            }
                         }
                         override fun onFailure(call: Call<CrudResponse>, t: Throwable) {}
                     })
                 } else {
                     RetrofitClient.instance.altaProducto(tokenFormateado, prodData).enqueue(object : Callback<CrudResponse> {
                         override fun onResponse(call: Call<CrudResponse>, response: Response<CrudResponse>) {
-                            if (response.isSuccessful) { cargarProductosDesdeApi(); dialog.dismiss() }
+                            if (response.isSuccessful) {
+                                cargarProductosDesdeApi()
+                                dialog.dismiss()
+                            } else {
+                                mostrarMensajeErrorBackend(response)
+                            }
                         }
                         override fun onFailure(call: Call<CrudResponse>, t: Throwable) {}
                     })
@@ -475,18 +532,45 @@ class ProductosActivity : AppCompatActivity() {
         layout.addView(inputNombre)
         layout.addView(inputDesc)
 
-        AlertDialog.Builder(this).setTitle("Nueva Categoría").setView(layout).setPositiveButton("Guardar") { _, _ ->
-            val nom = inputNombre.text.toString().trim()
-            val desc = inputDesc.text.toString().trim()
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Nueva Categoría")
+            .setView(layout)
+            .setPositiveButton("Guardar", null)
+            .setNegativeButton("Cancelar", null)
+            .create()
 
-            if (nom.isEmpty()) { Toast.makeText(this, "Nombre requerido", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
-            if (nom.length > 50 || desc.length > 50) { Toast.makeText(this, "Máximo 50 caracteres", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
+        dialog.setOnShowListener {
+            val b = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            b.setOnClickListener {
+                val nom = inputNombre.text.toString().trim()
+                val desc = inputDesc.text.toString().trim()
 
-            RetrofitClient.instance.crearCategoria(tokenFormateado, Categoria(nombre = nom, descripcion = desc)).enqueue(object : Callback<Void> {
-                override fun onResponse(call: Call<Void>, response: Response<Void>) { if (response.isSuccessful) onExito() }
-                override fun onFailure(call: Call<Void>, t: Throwable) {}
-            })
-        }.setNegativeButton("Cancelar", null).show()
+                if (nom.isEmpty()) { inputNombre.error = "Requerido"; return@setOnClickListener }
+                if (nom.length > 50) { inputNombre.error = "Máximo 50 caracteres"; return@setOnClickListener }
+                if (desc.length > 50) { inputDesc.error = "Máximo 50 caracteres"; return@setOnClickListener }
+
+                val nomLimpio = normalizarTexto(nom)
+                val existeCat = listaCategorias.any { normalizarTexto(it.nombre) == nomLimpio }
+                if (existeCat) {
+                    inputNombre.error = "Esta categoría ya existe"
+                    Toast.makeText(this, "Ya existe una categoría idéntica o muy similar", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+
+                RetrofitClient.instance.crearCategoria(tokenFormateado, Categoria(nombre = nom, descripcion = desc)).enqueue(object : Callback<Void> {
+                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                        if (response.isSuccessful) {
+                            onExito()
+                            dialog.dismiss()
+                        } else {
+                            mostrarMensajeErrorBackend(response)
+                        }
+                    }
+                    override fun onFailure(call: Call<Void>, t: Throwable) {}
+                })
+            }
+        }
+        dialog.show()
     }
 
     private fun mostrarDialogoEditarCategoria(cat: Categoria, onExito: () -> Unit) {
@@ -499,18 +583,45 @@ class ProductosActivity : AppCompatActivity() {
         layout.addView(inputNombre)
         layout.addView(inputDesc)
 
-        AlertDialog.Builder(this).setTitle("Modificar Categoría").setView(layout).setPositiveButton("Actualizar") { _, _ ->
-            val nom = inputNombre.text.toString().trim()
-            val desc = inputDesc.text.toString().trim()
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Modificar Categoría")
+            .setView(layout)
+            .setPositiveButton("Actualizar", null)
+            .setNegativeButton("Cancelar", null)
+            .create()
 
-            if (nom.isEmpty()) { Toast.makeText(this, "Nombre requerido", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
-            if (nom.length > 50 || desc.length > 50) { Toast.makeText(this, "Máximo 50 caracteres", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
+        dialog.setOnShowListener {
+            val b = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            b.setOnClickListener {
+                val nom = inputNombre.text.toString().trim()
+                val desc = inputDesc.text.toString().trim()
 
-            RetrofitClient.instance.actualizarCategoria(tokenFormateado, cat.nombre, Categoria(id = cat.id, nombre = nom, descripcion = desc)).enqueue(object : Callback<Void> {
-                override fun onResponse(call: Call<Void>, response: Response<Void>) { if (response.isSuccessful) onExito() }
-                override fun onFailure(call: Call<Void>, t: Throwable) {}
-            })
-        }.setNegativeButton("Cancelar", null).show()
+                if (nom.isEmpty()) { inputNombre.error = "Requerido"; return@setOnClickListener }
+                if (nom.length > 50) { inputNombre.error = "Máximo 50 caracteres"; return@setOnClickListener }
+                if (desc.length > 50) { inputDesc.error = "Máximo 50 caracteres"; return@setOnClickListener }
+
+                val nomLimpio = normalizarTexto(nom)
+                val existeCat = listaCategorias.any { normalizarTexto(it.nombre) == nomLimpio && it.id != cat.id }
+                if (existeCat) {
+                    inputNombre.error = "Esta categoría ya existe"
+                    Toast.makeText(this, "Ya existe otra categoría idéntica o muy similar", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+
+                RetrofitClient.instance.actualizarCategoria(tokenFormateado, cat.nombre, Categoria(id = cat.id, nombre = nom, descripcion = desc)).enqueue(object : Callback<Void> {
+                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                        if (response.isSuccessful) {
+                            onExito()
+                            dialog.dismiss()
+                        } else {
+                            mostrarMensajeErrorBackend(response)
+                        }
+                    }
+                    override fun onFailure(call: Call<Void>, t: Throwable) {}
+                })
+            }
+        }
+        dialog.show()
     }
 
     // ==========================================
@@ -532,29 +643,56 @@ class ProductosActivity : AppCompatActivity() {
         layout.addView(inputProveedor)
         layout.addView(inputDistribuidor)
 
-        AlertDialog.Builder(this).setTitle("Nueva Marca").setView(layout).setPositiveButton("Guardar") { _, _ ->
-            val nom = inputNombre.text.toString().trim()
-            val origen = inputOrigen.text.toString().trim()
-            val prov = inputProveedor.text.toString().trim()
-            val dist = inputDistribuidor.text.toString().trim()
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Nueva Marca")
+            .setView(layout)
+            .setPositiveButton("Guardar", null)
+            .setNegativeButton("Cancelar", null)
+            .create()
 
-            if (nom.isEmpty()) { Toast.makeText(this, "Nombre requerido", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
-            if (nom.length > 50 || origen.length > 50) { Toast.makeText(this, "Máximo 50 caracteres", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
-            if (prov.isEmpty()) { Toast.makeText(this, "Escribe el Proveedor", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
-            if (dist.isEmpty()) { Toast.makeText(this, "Escribe el Distribuidor", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
+        dialog.setOnShowListener {
+            val b = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            b.setOnClickListener {
+                val nom = inputNombre.text.toString().trim()
+                val origen = inputOrigen.text.toString().trim()
+                val prov = inputProveedor.text.toString().trim()
+                val dist = inputDistribuidor.text.toString().trim()
 
-            val nuevaMarca = Marca(
-                nombre = nom,
-                origen = if (origen.isEmpty()) null else origen,
-                proveedor = prov,
-                distribuidor = dist
-            )
+                if (nom.isEmpty()) { inputNombre.error = "Requerido"; return@setOnClickListener }
+                if (nom.length > 50) { inputNombre.error = "Máximo 50 caracteres"; return@setOnClickListener }
+                if (origen.length > 50) { inputOrigen.error = "Máximo 50 caracteres"; return@setOnClickListener }
+                if (prov.isEmpty()) { inputProveedor.error = "Requerido"; return@setOnClickListener }
+                if (dist.isEmpty()) { inputDistribuidor.error = "Requerido"; return@setOnClickListener }
 
-            RetrofitClient.instance.crearMarca(tokenFormateado, nuevaMarca).enqueue(object : Callback<Void> {
-                override fun onResponse(call: Call<Void>, response: Response<Void>) { if (response.isSuccessful) onExito() }
-                override fun onFailure(call: Call<Void>, t: Throwable) {}
-            })
-        }.setNegativeButton("Cancelar", null).show()
+                val nomLimpio = normalizarTexto(nom)
+                val existeMarca = listaMarcas.any { normalizarTexto(it.nombre) == nomLimpio }
+                if (existeMarca) {
+                    inputNombre.error = "Esta marca ya existe"
+                    Toast.makeText(this, "Ya existe una marca con este nombre", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+
+                val nuevaMarca = Marca(
+                    nombre = nom,
+                    origen = if (origen.isEmpty()) null else origen,
+                    proveedor = prov,
+                    distribuidor = dist
+                )
+
+                RetrofitClient.instance.crearMarca(tokenFormateado, nuevaMarca).enqueue(object : Callback<Void> {
+                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                        if (response.isSuccessful) {
+                            onExito()
+                            dialog.dismiss()
+                        } else {
+                            mostrarMensajeErrorBackend(response)
+                        }
+                    }
+                    override fun onFailure(call: Call<Void>, t: Throwable) {}
+                })
+            }
+        }
+        dialog.show()
     }
 
     private fun mostrarDialogoEditarMarca(marca: Marca, onExito: () -> Unit) {
@@ -573,30 +711,57 @@ class ProductosActivity : AppCompatActivity() {
         layout.addView(inputProveedor)
         layout.addView(inputDistribuidor)
 
-        AlertDialog.Builder(this).setTitle("Modificar Marca").setView(layout).setPositiveButton("Actualizar") { _, _ ->
-            val nom = inputNombre.text.toString().trim()
-            val origen = inputOrigen.text.toString().trim()
-            val prov = inputProveedor.text.toString().trim()
-            val dist = inputDistribuidor.text.toString().trim()
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Modificar Marca")
+            .setView(layout)
+            .setPositiveButton("Actualizar", null)
+            .setNegativeButton("Cancelar", null)
+            .create()
 
-            if (nom.isEmpty()) { Toast.makeText(this, "Nombre requerido", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
-            if (nom.length > 50 || origen.length > 50) { Toast.makeText(this, "Máximo 50 caracteres", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
-            if (prov.isEmpty()) { Toast.makeText(this, "Escribe el Proveedor", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
-            if (dist.isEmpty()) { Toast.makeText(this, "Escribe el Distribuidor", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
+        dialog.setOnShowListener {
+            val b = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            b.setOnClickListener {
+                val nom = inputNombre.text.toString().trim()
+                val origen = inputOrigen.text.toString().trim()
+                val prov = inputProveedor.text.toString().trim()
+                val dist = inputDistribuidor.text.toString().trim()
 
-            val marcaEditada = Marca(
-                id = marca.id,
-                nombre = nom,
-                origen = if (origen.isEmpty()) null else origen,
-                proveedor = prov,
-                distribuidor = dist
-            )
+                if (nom.isEmpty()) { inputNombre.error = "Requerido"; return@setOnClickListener }
+                if (nom.length > 50) { inputNombre.error = "Máximo 50 caracteres"; return@setOnClickListener }
+                if (origen.length > 50) { inputOrigen.error = "Máximo 50 caracteres"; return@setOnClickListener }
+                if (prov.isEmpty()) { inputProveedor.error = "Requerido"; return@setOnClickListener }
+                if (dist.isEmpty()) { inputDistribuidor.error = "Requerido"; return@setOnClickListener }
 
-            RetrofitClient.instance.actualizarMarca(tokenFormateado, marca.nombre, marcaEditada).enqueue(object : Callback<Void> {
-                override fun onResponse(call: Call<Void>, response: Response<Void>) { if (response.isSuccessful) onExito() }
-                override fun onFailure(call: Call<Void>, t: Throwable) {}
-            })
-        }.setNegativeButton("Cancelar", null).show()
+                val nomLimpio = normalizarTexto(nom)
+                val existeMarca = listaMarcas.any { normalizarTexto(it.nombre) == nomLimpio && it.id != marca.id }
+                if (existeMarca) {
+                    inputNombre.error = "Esta marca ya existe"
+                    Toast.makeText(this, "Ya existe otra marca con este nombre", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+
+                val marcaEditada = Marca(
+                    id = marca.id,
+                    nombre = nom,
+                    origen = if (origen.isEmpty()) null else origen,
+                    proveedor = prov,
+                    distribuidor = dist
+                )
+
+                RetrofitClient.instance.actualizarMarca(tokenFormateado, marca.nombre, marcaEditada).enqueue(object : Callback<Void> {
+                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                        if (response.isSuccessful) {
+                            onExito()
+                            dialog.dismiss()
+                        } else {
+                            mostrarMensajeErrorBackend(response)
+                        }
+                    }
+                    override fun onFailure(call: Call<Void>, t: Throwable) {}
+                })
+            }
+        }
+        dialog.show()
     }
 
     private fun confirmarEliminacion(producto: Producto) {
@@ -606,7 +771,11 @@ class ProductosActivity : AppCompatActivity() {
             .setPositiveButton("Borrar") { _, _ ->
                 RetrofitClient.instance.bajaProducto(tokenFormateado, producto._id).enqueue(object : Callback<CrudResponse> {
                     override fun onResponse(call: Call<CrudResponse>, response: Response<CrudResponse>) {
-                        if (response.isSuccessful) cargarProductosDesdeApi()
+                        if (response.isSuccessful) {
+                            cargarProductosDesdeApi()
+                        } else {
+                            mostrarMensajeErrorBackend(response)
+                        }
                     }
                     override fun onFailure(call: Call<CrudResponse>, t: Throwable) {}
                 })
@@ -616,11 +785,26 @@ class ProductosActivity : AppCompatActivity() {
     }
 
     // ==========================================
-    // 🛠️ MÉTODOS AUXILIARES DE NORMALIZACIÓN
+    // 🛠️ MÉTODOS AUXILIARES
     // ==========================================
     private fun normalizarTexto(texto: String): String {
         val normalizado = Normalizer.normalize(texto, Normalizer.Form.NFD)
         val sinAcentos = Regex("\\p{InCombiningDiacriticalMarks}+").replace(normalizado, "")
         return sinAcentos.lowercase().trim().replace(Regex("\\s+"), " ")
+    }
+
+    private fun <T> mostrarMensajeErrorBackend(response: Response<T>) {
+        try {
+            val errorJson = response.errorBody()?.string()
+            if (!errorJson.isNullOrEmpty()) {
+                val jsonObj = JSONObject(errorJson)
+                val mensajeError = jsonObj.optString("detail", "Error en el servidor")
+                Toast.makeText(this, mensajeError, Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(this, "Error: ${response.code()}", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error procesando respuesta del servidor", Toast.LENGTH_SHORT).show()
+        }
     }
 }

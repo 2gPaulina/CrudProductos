@@ -1,5 +1,6 @@
 package com.example.crudproductos
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -34,11 +35,16 @@ class ProductoAdapter(
     override fun onBindViewHolder(holder: ProductoViewHolder, position: Int) {
         val producto = listaProductos[position]
 
+        // 1. Asignar datos del producto a las vistas
         holder.tvNombreProducto.text = producto.nombre
         holder.tvPrecio.text = "$${producto.precio_venta}"
         holder.tvCodigoBarras.text = "Código: ${producto._id}"
         holder.tvCategoriaMarca.text = "Categoría: ${producto.categoria_nombre} | Marca: ${producto.marca_nombre}"
         holder.tvStock.text = "Stock: ${producto.inventario}"
+
+        // 2. Click Listeners (Siempre habilitados para Modificar y Eliminar)
+        holder.btnEditarItem.isEnabled = true
+        holder.btnEliminarItem.isEnabled = true
 
         holder.btnEditarItem.setOnClickListener {
             onEditarClick(producto)
@@ -46,6 +52,28 @@ class ProductoAdapter(
 
         holder.btnEliminarItem.setOnClickListener {
             onEliminarClick(producto)
+        }
+
+        // ⚡ 3. LÓGICA VISUAL DE STOCK (Gris / Opaco para agotados)
+        if (producto.inventario <= 0) {
+            // Opacidad en la tarjeta para dar el aspecto grisáceo/desactivado
+            holder.cardProducto.alpha = 0.5f
+
+            // Opcional: También puedes cambiar el fondo de la Card a un color gris claro
+            holder.cardProducto.setCardBackgroundColor(Color.parseColor("#E0E0E0"))
+
+            // Aseguramos que los botones sigan viéndose nítidos (100% opacidad)
+            holder.btnEditarItem.alpha = 1.0f
+            holder.btnEliminarItem.alpha = 1.0f
+        } else {
+            // Restaurar visualización normal para productos con stock (> 0)
+            holder.cardProducto.alpha = 1.0f
+
+            // Restaurar fondo blanco (o el color original de tu Card)
+            holder.cardProducto.setCardBackgroundColor(Color.WHITE)
+
+            holder.btnEditarItem.alpha = 1.0f
+            holder.btnEliminarItem.alpha = 1.0f
         }
     }
 
