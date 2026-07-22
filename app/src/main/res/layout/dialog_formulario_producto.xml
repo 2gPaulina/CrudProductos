@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fillViewport="true"
+    android:background="#FFFFFF">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:background="#FFFFFF">
+
+        <!-- Título Principal en Azul Oscuro -->
+        <TextView
+            android:id="@+id/tvTituloFormulario"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Registrar Producto"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="#0D47A1"
+            android:gravity="center"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Línea divisora decorativa en Azul Primario -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="#1976D2"
+            android:layout_marginBottom="18dp" />
+
+        <!-- Fila: Código de Barras + Botón de Escáner Azul -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="14dp">
+
+            <EditText
+                android:id="@+id/etCodigoForm"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Código de Barras (13 dígitos) *"
+                android:textColor="#1E293B"
+                android:textColorHint="#64748B"
+                android:inputType="number"
+                android:maxLength="13" />
+
+            <ImageButton
+                android:id="@+id/btnEscanearFormulario"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="10dp"
+                android:background="#1976D2"
+                android:src="@android:drawable/ic_menu_camera"
+                android:tint="#FFFFFF"
+                android:contentDescription="Escanear Código" />
+        </LinearLayout>
+
+        <!-- Nombre del Producto -->
+        <EditText
+            android:id="@+id/etNombreForm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nombre del Producto *"
+            android:textColor="#1E293B"
+            android:textColorHint="#64748B"
+            android:layout_marginBottom="14dp" />
+
+        <!-- Descripción -->
+        <EditText
+            android:id="@+id/etDescForm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Descripción"
+            android:textColor="#1E293B"
+            android:textColorHint="#64748B"
+            android:layout_marginBottom="14dp" />
+
+        <!-- Precios de Compra y Venta -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="14dp">
+
+            <EditText
+                android:id="@+id/etPrecioCompraForm"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="P. Compra ($) *"
+                android:textColor="#1E293B"
+                android:textColorHint="#64748B"
+                android:inputType="numberDecimal"
+                android:maxLength="7" />
+
+            <Space
+                android:layout_width="12dp"
+                android:layout_height="1dp" />
+
+            <EditText
+                android:id="@+id/etPrecioVentaForm"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="P. Venta ($) *"
+                android:textColor="#1E293B"
+                android:textColorHint="#64748B"
+                android:inputType="numberDecimal"
+                android:maxLength="7" />
+        </LinearLayout>
+
+        <!-- Stock / Cantidad -->
+        <EditText
+            android:id="@+id/etStockForm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Cantidad en Stock *"
+            android:textColor="#1E293B"
+            android:textColorHint="#64748B"
+            android:inputType="number"
+            android:maxLength="4"
+            android:layout_marginBottom="14dp" />
+
+        <!-- Fila: Categoría + Botón Azul -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="14dp">
+
+            <Spinner
+                android:id="@+id/spinnerCategoriaForm"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <ImageButton
+                android:id="@+id/btnConfigCategoria"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="10dp"
+                android:background="#1976D2"
+                android:src="@android:drawable/ic_menu_manage"
+                android:tint="#FFFFFF"
+                android:contentDescription="Gestionar Categoría" />
+        </LinearLayout>
+
+        <!-- Fila: Marca + Botón Azul -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="14dp">
+
+            <Spinner
+                android:id="@+id/spinnerMarcaForm"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <ImageButton
+                android:id="@+id/btnConfigMarca"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="10dp"
+                android:background="#1976D2"
+                android:src="@android:drawable/ic_menu_manage"
+                android:tint="#FFFFFF"
+                android:contentDescription="Gestionar Marca" />
+        </LinearLayout>
+
+        <!-- Proveedor (Lectura / Inhabilitado) -->
+        <EditText
+            android:id="@+id/etProveedorForm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Proveedor (Cargado por Marca)"
+            android:textColor="#475569"
+            android:textColorHint="#94A3B8"
+            android:enabled="false"
+            android:layout_marginBottom="14dp" />
+
+        <!-- Distribuidor (Lectura / Inhabilitado) -->
+        <EditText
+            android:id="@+id/etDistribuidorForm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Distribuidor (Cargado por Marca)"
+            android:textColor="#475569"
+            android:textColorHint="#94A3B8"
+            android:enabled="false"
+            android:layout_marginBottom="14dp" />
+
+    </LinearLayout>
+</ScrollView>

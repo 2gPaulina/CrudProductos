@@ -12,6 +12,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+// 📷 Imports para el escáner de códigos de barras (ZXing)
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
 import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
@@ -29,6 +32,17 @@ class ProductosActivity : AppCompatActivity() {
     private var listaProductos: List<Producto> = listOf()
     private var listaCategorias: List<Categoria> = listOf()
     private var listaMarcas: List<Marca> = listOf()
+
+    // EditText temporal para colocar el código escaneado
+    private var etCodigoActual: EditText? = null
+
+    // 📷 Launcher para recibir el resultado del escáner ZXing
+    private val barcodeLauncher = registerForActivityResult(ScanContract()) { result ->
+        if (result.contents != null) {
+            etCodigoActual?.setText(result.contents)
+            Toast.makeText(this, "Código escaneado: ${result.contents}", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -102,6 +116,20 @@ class ProductosActivity : AppCompatActivity() {
         })
     }
 
+    // 📷 Lanzar escáner de código de barras
+    private fun iniciarEscaneoCodigo(etCodigoTarget: EditText) {
+        etCodigoActual = etCodigoTarget
+        val options = ScanOptions().apply {
+            setDesiredBarcodeFormats(ScanOptions.PRODUCT_CODE_TYPES)
+            setPrompt("Escanea el código de barras del producto")
+            setCameraId(0)
+            setBeepEnabled(true)
+            setBarcodeImageEnabled(false)
+            setOrientationLocked(false)
+        }
+        barcodeLauncher.launch(options)
+    }
+
     // ==========================================
     // 📝 FORMULARIO DE PRODUCTO
     // ==========================================
@@ -116,10 +144,33 @@ class ProductosActivity : AppCompatActivity() {
         }
         scrollView.addView(container)
 
-        // 1. Campos Básicos
-        val etCodigo = crearEditTextPlano("Código de Barras (13 dígitos)", productoExistente?._id, !esEdicion, esEntero = true).apply {
+        // 1. Campos Básicos con Botón de Escáner
+        val rowCodigo = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        val etCodigo = crearEditTextPlano("Código de Barras (13 dígitos)", productoExistente?._id, !esEdicion, esEntero = true, layoutWeight = 1f).apply {
             filters = arrayOf(InputFilter.LengthFilter(13))
         }
+
+        val btnEscanear = ImageButton(this).apply {
+            setImageResource(android.R.drawable.ic_menu_camera)
+            setBackgroundColor(android.graphics.Color.parseColor("#6750A4"))
+            setColorFilter(android.graphics.Color.WHITE)
+            isEnabled = !esEdicion
+            layoutParams = LinearLayout.LayoutParams(110, 110).apply {
+                setMargins(16, 0, 0, 16)
+            }
+            setOnClickListener { iniciarEscaneoCodigo(etCodigo) }
+        }
+
+        rowCodigo.addView(etCodigo)
+        rowCodigo.addView(btnEscanear)
 
         val etNombre = crearEditTextPlano("Nombre del Producto", productoExistente?.nombre)
         val etDesc = crearEditTextPlano("Descripción", productoExistente?.descripcion)
@@ -150,7 +201,7 @@ class ProductosActivity : AppCompatActivity() {
             filters = arrayOf(InputFilter.LengthFilter(4))
         }
 
-        container.addView(etCodigo)
+        container.addView(rowCodigo)
         container.addView(etNombre)
         container.addView(etDesc)
         container.addView(rowPrecios)
@@ -188,7 +239,6 @@ class ProductosActivity : AppCompatActivity() {
                         val catNombre = spinnerCat.selectedItem?.toString() ?: ""
                         if (catNombre.isNotEmpty() && catNombre != "Seleccionar Categoría *") {
 
-                            // ⚡ VALIDACIÓN FRONTEND: Evitar dejar productos sin categoría válida
                             val tieneProductosAsociados = listaProductos.any { prod ->
                                 normalizarTexto(prod.categoria_nombre) == normalizarTexto(catNombre)
                             }
@@ -285,7 +335,6 @@ class ProductosActivity : AppCompatActivity() {
                         val marcaNombre = spinnerMarca.selectedItem?.toString() ?: ""
                         if (marcaNombre.isNotEmpty() && marcaNombre != "Seleccionar Marca *") {
 
-                            // ⚡ VALIDACIÓN FRONTEND: Evitar dejar productos sin marca válida
                             val tieneProductosAsociados = listaProductos.any { prod ->
                                 normalizarTexto(prod.marca_nombre) == normalizarTexto(marcaNombre)
                             }
@@ -357,7 +406,6 @@ class ProductosActivity : AppCompatActivity() {
 
                 if (nombreStr.isEmpty()) { etNombre.error = "Requerido"; return@setOnClickListener }
 
-                // VALIDACIÓN DE PRODUCTO DUPLICADO O SIMILAR
                 val nombreIngresadoLimpio = normalizarTexto(nombreStr)
                 val productoSimilar = listaProductos.find { prod ->
                     val nombreExistenteLimpio = normalizarTexto(prod.nombre)
