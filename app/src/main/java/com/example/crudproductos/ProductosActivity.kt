@@ -26,8 +26,6 @@ class ProductosActivity : AppCompatActivity() {
     private var listaProductos: List<Producto> = listOf()
     private var listaCategorias: List<Categoria> = listOf()
     private var listaMarcas: List<Marca> = listOf()
-    private var listaProveedores: List<Proveedor> = listOf()
-    private var listaDistribuidores: List<Distribuidor> = listOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,7 +60,6 @@ class ProductosActivity : AppCompatActivity() {
 
         cargarCategoriasDesdeApi()
         cargarMarcasDesdeApi()
-        cargarProveedoresYDistribuidores()
         cargarProductosDesdeApi()
     }
 
@@ -102,24 +99,8 @@ class ProductosActivity : AppCompatActivity() {
         })
     }
 
-    private fun cargarProveedoresYDistribuidores() {
-        RetrofitClient.instance.obtenerProveedores().enqueue(object : Callback<List<Proveedor>> {
-            override fun onResponse(call: Call<List<Proveedor>>, response: Response<List<Proveedor>>) {
-                if (response.isSuccessful && response.body() != null) listaProveedores = response.body()!!
-            }
-            override fun onFailure(call: Call<List<Proveedor>>, t: Throwable) {}
-        })
-
-        RetrofitClient.instance.obtenerDistribuidores().enqueue(object : Callback<List<Distribuidor>> {
-            override fun onResponse(call: Call<List<Distribuidor>>, response: Response<List<Distribuidor>>) {
-                if (response.isSuccessful && response.body() != null) listaDistribuidores = response.body()!!
-            }
-            override fun onFailure(call: Call<List<Distribuidor>>, t: Throwable) {}
-        })
-    }
-
     // ==========================================
-    // 📝 FORMULARIO DE PRODUCTO (DISEÑO EXACTO)
+    // 📝 FORMULARIO DE PRODUCTO
     // ==========================================
     private fun mostrarFormularioProducto(productoExistente: Producto?) {
         val esEdicion = productoExistente != null
@@ -134,12 +115,12 @@ class ProductosActivity : AppCompatActivity() {
         }
         scrollView.addView(container)
 
-        // Inputs planos tradicionales con línea inferior
+        // Inputs planos con línea inferior
         val etCodigo = crearEditTextPlano("Código de Barras", productoExistente?._id, !esEdicion)
         val etNombre = crearEditTextPlano("Nombre del Producto", productoExistente?.nombre)
         val etDesc = crearEditTextPlano("Descripción", productoExistente?.descripcion)
 
-        // Precios en horizontal
+        // Precios
         val rowPrecios = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             isBaselineAligned = false
@@ -344,7 +325,7 @@ class ProductosActivity : AppCompatActivity() {
     }
 
     // ==========================================
-    // 🎨 AUXILIARES DE DISEÑO DE INTERFAZ
+    // 🎨 AUXILIARES DE DISEÑO
     // ==========================================
     private fun crearEditTextPlano(
         hint: String,
@@ -388,7 +369,7 @@ class ProductosActivity : AppCompatActivity() {
 
         val btnConfig = ImageButton(this).apply {
             setImageResource(android.R.drawable.ic_menu_manage)
-            setBackgroundColor(android.graphics.Color.parseColor("#6750A4")) // Color púrpura exacto
+            setBackgroundColor(android.graphics.Color.parseColor("#6750A4"))
             setColorFilter(android.graphics.Color.WHITE)
             layoutParams = LinearLayout.LayoutParams(110, 110).apply {
                 setMargins(16, 0, 0, 0)
@@ -453,7 +434,7 @@ class ProductosActivity : AppCompatActivity() {
     }
 
     // ==========================================
-    // 🏷️ MODALES PARA MARCAS (AQUÍ SÍ SE PIDEN PROVEEDOR Y DISTRIBUIDOR)
+    // 🏷️ MODALES PARA MARCAS (CAMPOS DE TEXTO MANUALES)
     // ==========================================
     private fun mostrarDialogoCrearMarca(onExito: () -> Unit) {
         val layout = LinearLayout(this).apply {
@@ -463,40 +444,30 @@ class ProductosActivity : AppCompatActivity() {
 
         val inputNombre = EditText(this).apply { hint = "Nombre Marca (Máx 50) *" }
         val inputOrigen = EditText(this).apply { hint = "Origen (Ej. México) (Máx 50)" }
-
-        val spinnerProv = Spinner(this).apply {
-            val lista = mutableListOf("Seleccionar Proveedor *")
-            lista.addAll(listaProveedores.map { it.nombre })
-            adapter = ArrayAdapter(this@ProductosActivity, android.R.layout.simple_spinner_dropdown_item, lista)
-        }
-
-        val spinnerDist = Spinner(this).apply {
-            val lista = mutableListOf("Seleccionar Distribuidor *")
-            lista.addAll(listaDistribuidores.map { it.nombre })
-            adapter = ArrayAdapter(this@ProductosActivity, android.R.layout.simple_spinner_dropdown_item, lista)
-        }
+        val inputProveedor = EditText(this).apply { hint = "Proveedor *" }
+        val inputDistribuidor = EditText(this).apply { hint = "Distribuidor *" }
 
         layout.addView(inputNombre)
         layout.addView(inputOrigen)
-        layout.addView(spinnerProv)
-        layout.addView(spinnerDist)
+        layout.addView(inputProveedor)
+        layout.addView(inputDistribuidor)
 
         AlertDialog.Builder(this).setTitle("Nueva Marca").setView(layout).setPositiveButton("Guardar") { _, _ ->
             val nom = inputNombre.text.toString().trim()
             val origen = inputOrigen.text.toString().trim()
-            val provSeleccionado = if (spinnerProv.selectedItemPosition > 0) spinnerProv.selectedItem.toString() else ""
-            val distSeleccionado = if (spinnerDist.selectedItemPosition > 0) spinnerDist.selectedItem.toString() else ""
+            val prov = inputProveedor.text.toString().trim()
+            val dist = inputDistribuidor.text.toString().trim()
 
             if (nom.isEmpty()) { Toast.makeText(this, "Nombre requerido", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
             if (nom.length > 50 || origen.length > 50) { Toast.makeText(this, "Máximo 50 caracteres", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
-            if (provSeleccionado.isEmpty()) { Toast.makeText(this, "Selecciona un Proveedor", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
-            if (distSeleccionado.isEmpty()) { Toast.makeText(this, "Selecciona un Distribuidor", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
+            if (prov.isEmpty()) { Toast.makeText(this, "Escribe el Proveedor", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
+            if (dist.isEmpty()) { Toast.makeText(this, "Escribe el Distribuidor", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
 
             val nuevaMarca = Marca(
                 nombre = nom,
                 origen = if (origen.isEmpty()) null else origen,
-                proveedor = provSeleccionado,
-                distribuidor = distSeleccionado
+                proveedor = prov,
+                distribuidor = dist
             )
 
             RetrofitClient.instance.crearMarca(tokenFormateado, nuevaMarca).enqueue(object : Callback<Void> {
@@ -514,43 +485,31 @@ class ProductosActivity : AppCompatActivity() {
 
         val inputNombre = EditText(this).apply { setText(marca.nombre) }
         val inputOrigen = EditText(this).apply { setText(marca.origen ?: "") }
-
-        val listProv = mutableListOf("Seleccionar Proveedor *").apply { addAll(listaProveedores.map { it.nombre }) }
-        val spinnerProv = Spinner(this).apply {
-            adapter = ArrayAdapter(this@ProductosActivity, android.R.layout.simple_spinner_dropdown_item, listProv)
-            val pos = listProv.indexOf(marca.proveedor ?: "")
-            if (pos >= 0) setSelection(pos)
-        }
-
-        val listDist = mutableListOf("Seleccionar Distribuidor *").apply { addAll(listaDistribuidores.map { it.nombre }) }
-        val spinnerDist = Spinner(this).apply {
-            adapter = ArrayAdapter(this@ProductosActivity, android.R.layout.simple_spinner_dropdown_item, listDist)
-            val pos = listDist.indexOf(marca.distribuidor ?: "")
-            if (pos >= 0) setSelection(pos)
-        }
+        val inputProveedor = EditText(this).apply { setText(marca.proveedor ?: "") }
+        val inputDistribuidor = EditText(this).apply { setText(marca.distribuidor ?: "") }
 
         layout.addView(inputNombre)
         layout.addView(inputOrigen)
-        layout.addView(spinnerProv)
-        layout.addView(spinnerDist)
+        layout.addView(inputProveedor)
+        layout.addView(inputDistribuidor)
 
         AlertDialog.Builder(this).setTitle("Modificar Marca").setView(layout).setPositiveButton("Actualizar") { _, _ ->
             val nom = inputNombre.text.toString().trim()
             val origen = inputOrigen.text.toString().trim()
-            val provSeleccionado = if (spinnerProv.selectedItemPosition > 0) spinnerProv.selectedItem.toString() else ""
-            val distSeleccionado = if (spinnerDist.selectedItemPosition > 0) spinnerDist.selectedItem.toString() else ""
+            val prov = inputProveedor.text.toString().trim()
+            val dist = inputDistribuidor.text.toString().trim()
 
             if (nom.isEmpty()) { Toast.makeText(this, "Nombre requerido", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
             if (nom.length > 50 || origen.length > 50) { Toast.makeText(this, "Máximo 50 caracteres", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
-            if (provSeleccionado.isEmpty()) { Toast.makeText(this, "Selecciona un Proveedor", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
-            if (distSeleccionado.isEmpty()) { Toast.makeText(this, "Selecciona un Distribuidor", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
+            if (prov.isEmpty()) { Toast.makeText(this, "Escribe el Proveedor", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
+            if (dist.isEmpty()) { Toast.makeText(this, "Escribe el Distribuidor", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
 
             val marcaEditada = Marca(
                 id = marca.id,
                 nombre = nom,
                 origen = if (origen.isEmpty()) null else origen,
-                proveedor = provSeleccionado,
-                distribuidor = distSeleccionado
+                proveedor = prov,
+                distribuidor = dist
             )
 
             RetrofitClient.instance.actualizarMarca(tokenFormateado, marca.nombre, marcaEditada).enqueue(object : Callback<Void> {
