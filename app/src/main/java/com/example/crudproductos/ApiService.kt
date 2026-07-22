@@ -20,10 +20,6 @@ data class UsuarioResponse(
 data class LoginResponse(val status: String, val token_jwt: String, val usuario: UsuarioResponse)
 
 // Sub-objeto embebido para el Proveedor del producto
-data class Proveedor(
-    val nombre: String,
-    val direccion: String
-)
 
 // Estructura completa de Producto conforme a tus tablas
 data class Producto(
@@ -84,6 +80,8 @@ interface ApiService {
         @Body producto: Producto
     ): Call<CrudResponse>
 
+    @GET("productos")
+    fun obtenerProductos(): Call<List<Producto>>
     @GET("categorias") // O la ruta exacta de tu FastAPI
     fun obtenerCategorias(): Call<List<Categoria>>
 
@@ -129,4 +127,9 @@ interface ApiService {
         @Body marca: Marca
     ): Call<Void>
 
+    @GET("proveedores")
+    fun obtenerProveedores(): Call<List<Proveedor>>
+
+    @GET("distribuidores")
+    fun obtenerDistribuidores(): Call<List<Distribuidor>>
 }
