@@ -8,47 +8,6 @@
     android:background="#F8FAFC"
     tools:context=".Usuario">
 
-    <androidx.cardview.widget.CardView
-        android:id="@+id/searchCard"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="16dp"
-        app:cardBackgroundColor="#FFFFFF"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="2dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/headerCard">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <SearchView
-                android:id="@+id/searchView"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:iconifiedByDefault="false"
-                android:queryBackground="@android:color/transparent"
-                android:queryHint="Buscar producto..." />
-
-            <!-- 📷 BOTÓN DE CÁMARA PARA ESCANEAR -->
-            <ImageButton
-                android:id="@+id/btnEscanearCamara"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginEnd="8dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Escanear producto"
-                android:src="@android:drawable/ic_menu_camera"
-                app:tint="#0284C7" />
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
-
     <!-- ⚪ ENCABEZADO SUPERIOR BLANCO -->
     <androidx.cardview.widget.CardView
         android:id="@+id/headerCard"
@@ -97,13 +56,13 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>
 
-    <!-- 🔍 BARRA DE BÚSQUEDA FLOTANTE -->
+    <!-- 🔍 BARRA DE BÚSQUEDA Y CÁMARA -->
     <androidx.cardview.widget.CardView
         android:id="@+id/searchCard"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="12dp"
         app:cardBackgroundColor="#FFFFFF"
         app:cardCornerRadius="12dp"
         app:cardElevation="2dp"
@@ -111,14 +70,92 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/headerCard">
 
-        <SearchView
-            android:id="@+id/searchView"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:iconifiedByDefault="false"
-            android:queryBackground="@android:color/transparent"
-            android:queryHint="Buscar producto..." />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <SearchView
+                android:id="@+id/searchView"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:iconifiedByDefault="false"
+                android:queryBackground="@android:color/transparent"
+                android:queryHint="Buscar producto..." />
+
+            <!-- 📷 BOTÓN DE CÁMARA PARA ESCANEAR -->
+            <ImageButton
+                android:id="@+id/btnEscanearCamara"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Escanear producto"
+                android:src="@android:drawable/ic_menu_camera"
+                app:tint="#0284C7" />
+        </LinearLayout>
     </androidx.cardview.widget.CardView>
+
+    <!-- ⚡ BARRA DE BOTONES RÁPIDOS (RF-21) -->
+    <HorizontalScrollView
+        android:id="@+id/scrollBotonesRapidos"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="8dp"
+        android:scrollbars="none"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/searchCard">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnCoca"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:text="🥤 Coca-Cola"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/btnChidas"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:text="🍿 Las Chidas"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/btnTrident"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:text="🍬 Trident"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/btnMazapan"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:text="🥜 Mazapán"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/btnGalletas"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🍪 Galletas"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+    </HorizontalScrollView>
 
     <!-- 📦 LISTA DE PRODUCTOS -->
     <androidx.recyclerview.widget.RecyclerView
@@ -127,12 +164,12 @@
         android:layout_height="0dp"
         android:clipToPadding="false"
         android:paddingHorizontal="16dp"
-        android:paddingTop="12dp"
+        android:paddingTop="8dp"
         android:paddingBottom="90dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/searchCard"
+        app:layout_constraintTop_toBottomOf="@+id/scrollBotonesRapidos"
         tools:listitem="@layout/item_producto_usuario" />
 
     <!-- 🛒 BARRA FLOTANTE INFERIOR (CUENTA / CARRITO) -->

@@ -51,6 +51,12 @@ class Usuario : AppCompatActivity() {
     private lateinit var btnEscanearCamara: ImageButton
     private lateinit var adapter: ProductoUsuarioAdapter
 
+    private lateinit var btnCoca: Button
+    private lateinit var btnChidas: Button
+    private lateinit var btnTrident: Button
+    private lateinit var btnMazapan: Button
+    private lateinit var btnGalletas: Button
+
     private var listaProductos = mutableListOf<Producto>()
     private val carrito = mutableListOf<ItemCarrito>()
     private var tokenJwt: String = ""
@@ -123,6 +129,20 @@ class Usuario : AppCompatActivity() {
                 return true
             }
         })
+
+        btnCoca = findViewById(R.id.btnCoca)
+        btnChidas = findViewById(R.id.btnChidas)
+        btnTrident = findViewById(R.id.btnTrident)
+        btnMazapan = findViewById(R.id.btnMazapan)
+        btnGalletas = findViewById(R.id.btnGalletas)
+
+// Configurar sus eventos Clic
+        btnCoca.setOnClickListener { agregarPorAccesoDirecto("Coca-Cola") }
+        btnChidas.setOnClickListener { agregarPorAccesoDirecto("Las Chidas") }
+        btnTrident.setOnClickListener { agregarPorAccesoDirecto("Trident") }
+        btnMazapan.setOnClickListener { agregarPorAccesoDirecto("Mazapan") }
+        btnGalletas.setOnClickListener { agregarPorAccesoDirecto("Galletas") }
+
     }
 
     // -------------------------------------------------------------
@@ -237,9 +257,48 @@ class Usuario : AppCompatActivity() {
     // 🚪 CERRAR SESIÓN
     // -------------------------------------------------------------
     private fun cerrarSesion() {
+        // Obtenemos el correo del usuario actualmente logueado en Firebase
+        val correoUsuario = FirebaseAuth.getInstance().currentUser?.email ?: ""
+
+        if (correoUsuario.isNotEmpty()) {
+            Toast.makeText(this, "Procesando corte de caja...", Toast.LENGTH_SHORT).show()
+
+            // Llamada al endpoint de FastAPI consultando directo por correo
+            RetrofitClient.instance.realizarCorteAutomatico(correoUsuario)
+                .enqueue(object : Callback<CorteResponse> {
+                    override fun onResponse(call: Call<CorteResponse>, response: Response<CorteResponse>) {
+                        if (response.isSuccessful && response.body() != null) {
+                            val total = response.body()?.total_acumulado ?: 0.0
+                            val mensaje = response.body()?.message ?: "Corte registrado"
+
+                            Toast.makeText(
+                                this@Usuario,
+                                "$mensaje. Total de ventas: $$total",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        } else {
+                            Toast.makeText(this@Usuario, "Aviso: No se pudo registrar el corte automático", Toast.LENGTH_SHORT).show()
+                        }
+                        // Procedemos a salir
+                        finalizarSalida()
+                    }
+
+                    override fun onFailure(call: Call<CorteResponse>, t: Throwable) {
+                        Log.e("CORTE_ERROR", "Error de red: ${t.message}")
+                        Toast.makeText(this@Usuario, "Fallo de conexión al realizar corte", Toast.LENGTH_SHORT).show()
+                        finalizarSalida()
+                    }
+                })
+        } else {
+            finalizarSalida()
+        }
+    }
+
+    private fun finalizarSalida() {
         FirebaseAuth.getInstance().signOut()
         val prefs = getSharedPreferences("MisPreferencias", Context.MODE_PRIVATE)
         prefs.edit().clear().apply()
+
         Toast.makeText(this, "Sesión cerrada correctamente", Toast.LENGTH_SHORT).show()
         val intent = Intent(this, LoginActivity::class.java)
         startActivity(intent)
@@ -359,8 +418,16 @@ class Usuario : AppCompatActivity() {
         var ventasExitosas = 0
         val totalVentas = carrito.size
 
+        // 🔴 OBTENER CORREO DEL VENDEDOR ACTUAL DE FIREBASE
+        val correoVendedor = FirebaseAuth.getInstance().currentUser?.email ?: ""
+
         for (item in carrito) {
-            val requestVenta = VentaRequest(codigo_barras = item.producto._id, cantidad = item.cantidad)
+            val requestVenta = VentaRequest(
+                codigo_barras = item.producto._id,
+                cantidad = item.cantidad,
+                correo_vendedor = correoVendedor // 👈 ¡CLAVE PARA ASIGNAR LA VENTA AL CAJERO!
+            )
+
             RetrofitClient.instance.realizarVenta(tokenJwt, requestVenta)
                 .enqueue(object : Callback<VentaResponse> {
                     override fun onResponse(call: Call<VentaResponse>, response: Response<VentaResponse>) {
@@ -386,7 +453,11 @@ class Usuario : AppCompatActivity() {
                 override fun onResponse(call: Call<List<Producto>>, response: Response<List<Producto>>) {
                     if (response.isSuccessful && response.body() != null) {
                         listaProductos.clear()
-                        listaProductos.addAll(response.body()!!)
+
+                        // 🔴 CAMBIO AQUÍ: Filtrar solo los productos con stock mayor a 0
+                        val productosConStock = response.body()!!.filter { it.inventario > 0 }
+
+                        listaProductos.addAll(productosConStock)
                         adapter.actualizarLista(listaProductos)
                     } else {
                         Toast.makeText(this@Usuario, "Error al cargar productos", Toast.LENGTH_SHORT).show()
@@ -400,11 +471,32 @@ class Usuario : AppCompatActivity() {
     }
 
     private fun filtrar(texto: String?) {
+        // 🔴 CAMBIO AQUÍ: Aseguramos mantener únicamente los de stock > 0 al buscar
+        val productosDisponibles = listaProductos.filter { it.inventario > 0 }
+
         val listaFiltrada = if (texto.isNullOrEmpty()) {
-            listaProductos
+            productosDisponibles
         } else {
-            listaProductos.filter { it.nombre.lowercase().contains(texto.lowercase()) }
+            productosDisponibles.filter { it.nombre.lowercase().contains(texto.lowercase()) }
         }
         adapter.actualizarLista(listaFiltrada)
+    }
+
+    private fun agregarPorAccesoDirecto(busqueda: String) {
+        // Busca el primer producto en la lista cargada que coincida con el nombre
+        val productoEncontrado = listaProductos.find {
+            it.nombre.lowercase().contains(busqueda.lowercase()) && it.inventario > 0
+        }
+
+        if (productoEncontrado != null) {
+            // Abre tu modal existente para elegir cantidad
+            mostrarDialogoSeleccionarCantidad(productoEncontrado)
+        } else {
+            Toast.makeText(
+                this,
+                "Producto '$busqueda' no disponible en stock o no existe en catálogo",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
     }
 }

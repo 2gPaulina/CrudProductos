@@ -199,5 +199,17 @@
             android:enabled="false"
             android:layout_marginBottom="14dp" />
 
+        <!-- 🔴 CASILLA OBLIGATORIA: PRUEBA DE CALIDAD (RF-14) -->
+        <CheckBox
+            android:id="@+id/cbPruebaCalidad"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="20dp"
+            android:text="Prueba de calidad aprobada *"
+            android:textColor="#1E293B"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
     </LinearLayout>
 </ScrollView>

@@ -41,7 +41,7 @@ data class Producto(
     val tasa_iva: Double = 0.16
 )
 data class CrudResponse(val status: String, val message: String)
-data class VentaRequest(val codigo_barras: String, val cantidad: Int = 1)
+data class VentaRequest(val codigo_barras: String, val cantidad: Int = 1, val correo_vendedor: String? = null)
 data class VentaResponse(val status: String, val inventario_nuevo: Int)
 
 // =================================================================
@@ -139,4 +139,10 @@ interface ApiService {
 
     @GET("distribuidores")
     fun obtenerDistribuidores(): Call<List<Distribuidor>>
+
+    // Agrega esto en tu archivo ApiService.kt
+    @GET("caja/corte-automatico")
+    fun realizarCorteAutomatico(
+        @Query("correo") correo: String
+    ): Call<CorteResponse>
 }

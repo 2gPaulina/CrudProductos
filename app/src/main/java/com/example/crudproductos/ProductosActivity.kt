@@ -25,10 +25,8 @@ class ProductosActivity : AppCompatActivity() {
 
     private var tokenJwt: String? = null
     private lateinit var tokenFormateado: String
-
     private lateinit var rvProductos: RecyclerView
     private lateinit var adapter: ProductoAdapter
-
     private var listaProductos: List<Producto> = listOf()
     private var listaCategorias: List<Categoria> = listOf()
     private var listaMarcas: List<Marca> = listOf()
@@ -125,6 +123,7 @@ class ProductosActivity : AppCompatActivity() {
 
         // Inflado directo del XML dialog_formulario_producto.xml
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_formulario_producto, null)
+
         val tvTitulo = dialogView.findViewById<TextView>(R.id.tvTituloFormulario)
         val etCodigo = dialogView.findViewById<EditText>(R.id.etCodigoForm)
         val btnEscanear = dialogView.findViewById<ImageButton>(R.id.btnEscanearFormulario)
@@ -139,6 +138,9 @@ class ProductosActivity : AppCompatActivity() {
         val btnMarca = dialogView.findViewById<ImageButton>(R.id.btnConfigMarca)
         val etProveedor = dialogView.findViewById<EditText>(R.id.etProveedorForm)
         val etDistribuidor = dialogView.findViewById<EditText>(R.id.etDistribuidorForm)
+
+        // 🔴 REFERENCIA AL CHECKBOX DE PRUEBA DE CALIDAD (RF-14)
+        val cbPruebaCalidad = dialogView.findViewById<CheckBox>(R.id.cbPruebaCalidad)
 
         etCodigoFormRef = etCodigo
 
@@ -193,6 +195,7 @@ class ProductosActivity : AppCompatActivity() {
             popup.menu.add("➕ Nueva Categoría")
             popup.menu.add("✏️ Editar Seleccionada")
             popup.menu.add("🗑️ Eliminar Seleccionada")
+
             popup.setOnMenuItemClickListener { item ->
                 when (item.title) {
                     "➕ Nueva Categoría" -> mostrarDialogoCrearCategoria { cargarCategoriasDesdeApi { updateAdapterCat() } }
@@ -207,7 +210,6 @@ class ProductosActivity : AppCompatActivity() {
                             val tieneProductosAsociados = listaProductos.any { prod ->
                                 normalizarTexto(prod.categoria_nombre) == normalizarTexto(catNombre)
                             }
-
                             if (tieneProductosAsociados) {
                                 AlertDialog.Builder(this)
                                     .setTitle("Acción denegada")
@@ -277,6 +279,7 @@ class ProductosActivity : AppCompatActivity() {
             popup.menu.add("➕ Nueva Marca")
             popup.menu.add("✏️ Editar Seleccionada")
             popup.menu.add("🗑️ Eliminar Seleccionada")
+
             popup.setOnMenuItemClickListener { item ->
                 when (item.title) {
                     "➕ Nueva Marca" -> mostrarDialogoCrearMarca { cargarMarcasDesdeApi { updateAdapterMarca() } }
@@ -291,7 +294,6 @@ class ProductosActivity : AppCompatActivity() {
                             val tieneProductosAsociados = listaProductos.any { prod ->
                                 normalizarTexto(prod.marca_nombre) == normalizarTexto(marcaNombre)
                             }
-
                             if (tieneProductosAsociados) {
                                 AlertDialog.Builder(this)
                                     .setTitle("Acción denegada")
@@ -337,10 +339,21 @@ class ProductosActivity : AppCompatActivity() {
             dialog.window?.setBackgroundDrawable(ColorDrawable(Color.WHITE))
             val btnPositive = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             val btnNegative = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+
             btnPositive.setTextColor(Color.parseColor("#1976D2"))
             btnNegative.setTextColor(Color.parseColor("#757575"))
 
             btnPositive.setOnClickListener {
+                // 🔴 REGLA RF-14: VALIDACIÓN DE PRUEBA DE CALIDAD OBLIGATORIA
+                if (cbPruebaCalidad != null && !cbPruebaCalidad.isChecked) {
+                    Toast.makeText(
+                        this@ProductosActivity,
+                        "⚠️ Debes aprobar la prueba de calidad antes de registrar o modificar el stock",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    return@setOnClickListener
+                }
+
                 val codigoStr = etCodigo.text.toString().trim()
                 val nombreStr = etNombre.text.toString().trim()
                 val descStr = etDesc.text.toString().trim()
@@ -445,6 +458,7 @@ class ProductosActivity : AppCompatActivity() {
         }
         val inputNombre = EditText(this).apply { hint = "Nombre Categoría (Máx 50) *" }
         val inputDesc = EditText(this).apply { hint = "Descripción (Máx 50)" }
+
         layout.addView(inputNombre)
         layout.addView(inputDesc)
 
@@ -458,6 +472,7 @@ class ProductosActivity : AppCompatActivity() {
         dialog.setOnShowListener {
             val bPos = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             val bNeg = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+
             bPos.setTextColor(Color.parseColor("#1976D2"))
             bNeg.setTextColor(Color.parseColor("#757575"))
 
@@ -471,6 +486,7 @@ class ProductosActivity : AppCompatActivity() {
 
                 val nomLimpio = normalizarTexto(nom)
                 val existeCat = listaCategorias.any { normalizarTexto(it.nombre) == nomLimpio }
+
                 if (existeCat) {
                     inputNombre.error = "Esta categoría ya existe"
                     Toast.makeText(this, "Ya existe una categoría idéntica o muy similar", Toast.LENGTH_SHORT).show()
@@ -500,6 +516,7 @@ class ProductosActivity : AppCompatActivity() {
         }
         val inputNombre = EditText(this).apply { setText(cat.nombre) }
         val inputDesc = EditText(this).apply { setText(cat.descripcion ?: "") }
+
         layout.addView(inputNombre)
         layout.addView(inputDesc)
 
@@ -513,6 +530,7 @@ class ProductosActivity : AppCompatActivity() {
         dialog.setOnShowListener {
             val bPos = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             val bNeg = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+
             bPos.setTextColor(Color.parseColor("#1976D2"))
             bNeg.setTextColor(Color.parseColor("#757575"))
 
@@ -526,6 +544,7 @@ class ProductosActivity : AppCompatActivity() {
 
                 val nomLimpio = normalizarTexto(nom)
                 val existeCat = listaCategorias.any { normalizarTexto(it.nombre) == nomLimpio && it.id != cat.id }
+
                 if (existeCat) {
                     inputNombre.error = "Esta categoría ya existe"
                     Toast.makeText(this, "Ya existe otra categoría idéntica o muy similar", Toast.LENGTH_SHORT).show()
@@ -576,6 +595,7 @@ class ProductosActivity : AppCompatActivity() {
         dialog.setOnShowListener {
             val bPos = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             val bNeg = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+
             bPos.setTextColor(Color.parseColor("#1976D2"))
             bNeg.setTextColor(Color.parseColor("#757575"))
 
@@ -593,6 +613,7 @@ class ProductosActivity : AppCompatActivity() {
 
                 val nomLimpio = normalizarTexto(nom)
                 val existeMarca = listaMarcas.any { normalizarTexto(it.nombre) == nomLimpio }
+
                 if (existeMarca) {
                     inputNombre.error = "Esta marca ya existe"
                     Toast.makeText(this, "Ya existe una marca con este nombre", Toast.LENGTH_SHORT).show()
@@ -647,6 +668,7 @@ class ProductosActivity : AppCompatActivity() {
         dialog.setOnShowListener {
             val bPos = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             val bNeg = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+
             bPos.setTextColor(Color.parseColor("#1976D2"))
             bNeg.setTextColor(Color.parseColor("#757575"))
 
@@ -664,6 +686,7 @@ class ProductosActivity : AppCompatActivity() {
 
                 val nomLimpio = normalizarTexto(nom)
                 val existeMarca = listaMarcas.any { normalizarTexto(it.nombre) == nomLimpio && it.id != marca.id }
+
                 if (existeMarca) {
                     inputNombre.error = "Esta marca ya existe"
                     Toast.makeText(this, "Ya existe otra marca con este nombre", Toast.LENGTH_SHORT).show()
@@ -695,6 +718,16 @@ class ProductosActivity : AppCompatActivity() {
     }
 
     private fun confirmarEliminacion(producto: Producto) {
+        // 🔴 VALIDACIÓN DEFENSIVA: Bloquea la eliminación si todavía hay inventario existente
+        if (producto.inventario > 0) {
+            AlertDialog.Builder(this)
+                .setTitle("Acción Denegada")
+                .setMessage("No se puede eliminar '${producto.nombre}' porque aún cuenta con ${producto.inventario} unidades en stock.")
+                .setPositiveButton("Entendido", null)
+                .show()
+            return
+        }
+
         val dialog = AlertDialog.Builder(this)
             .setTitle("Confirmar Borrado")
             .setMessage("¿Deseas eliminar '${producto.nombre}'?")
