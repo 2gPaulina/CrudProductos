@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "703395491079",
+    "project_id": "puntoventagcp",
+    "storage_bucket": "puntoventagcp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:703395491079:android:f3289a36f19f8ada0369a2",
+        "android_client_info": {
+          "package_name": "com.example.crudproductos"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBSQtRwFj5_BhS_HXOgWA_Iqdly9-NLdCA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
