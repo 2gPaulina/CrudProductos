@@ -2,6 +2,7 @@ package com.example.crudproductos
 
 import retrofit2.Call
 import retrofit2.http.*
+import okhttp3.ResponseBody
 
 // =================================================================
 // 📦 MODELOS DE DATOS COMPLETOS (ESPEJO FIEL DE TU EXAMEN)
@@ -39,6 +40,12 @@ data class Producto(
     val creado_por: String,
     val activo: Boolean,
     val tasa_iva: Double = 0.16
+)
+
+data class ConsumoResponse(
+    val status: String,
+    val message: String,
+    val inventario_nuevo: Int
 )
 data class CrudResponse(val status: String, val message: String)
 data class VentaRequest(val codigo_barras: String, val cantidad: Int = 1, val correo_vendedor: String? = null)
@@ -145,4 +152,10 @@ interface ApiService {
     fun realizarCorteAutomatico(
         @Query("correo") correo: String
     ): Call<CorteResponse>
+
+    @POST("consumo-propio")
+    fun registrarConsumoPropio(
+        @Header("Authorization") token: String,
+        @Body request: Map<String, String>
+    ): Call<ConsumoResponse>
 }

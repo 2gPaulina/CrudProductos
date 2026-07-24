@@ -50,6 +50,7 @@ class Usuario : AppCompatActivity() {
     private lateinit var btnCerrarSesion: Button
     private lateinit var btnEscanearCamara: ImageButton
     private lateinit var adapter: ProductoUsuarioAdapter
+    private lateinit var btnConsumoPropio: Button
 
     private lateinit var btnCoca: Button
     private lateinit var btnChidas: Button
@@ -57,20 +58,19 @@ class Usuario : AppCompatActivity() {
     private lateinit var btnMazapan: Button
     private lateinit var btnGalletas: Button
 
+    private lateinit var btnTodos: Button
+
     private var listaProductos = mutableListOf<Producto>()
     private val carrito = mutableListOf<ItemCarrito>()
     private var tokenJwt: String = ""
 
-    // 📍 Variables de Ubicación
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var ubicacionActualTexto: String = "Ubicación no obtenida"
 
-    // 📷 Lanzador para el Escáner de Código de Barras (ÚNICA DECLARACIÓN)
     private val barcodeLauncher = registerForActivityResult(ScanContract()) { result ->
         if (result.contents != null) {
             val codigoEscaneado = result.contents
             val productoEncontrado = listaProductos.find { it._id == codigoEscaneado }
-
             if (productoEncontrado != null) {
                 mostrarDialogoSeleccionarCantidad(productoEncontrado)
             } else {
@@ -93,34 +93,54 @@ class Usuario : AppCompatActivity() {
         val prefs = getSharedPreferences("MisPreferencias", Context.MODE_PRIVATE)
         tokenJwt = "Bearer ${prefs.getString("TOKEN", "")}"
 
-        // Inicializar Ubicación
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         solicitarUbicacionActual()
 
-        // Vincular vistas
+        // Vincular vistas de la interfaz
         recyclerView = findViewById(R.id.recyclerViewProductos)
         searchView = findViewById(R.id.searchView)
         btnVerCuenta = findViewById(R.id.btnVerCuenta)
         btnCerrarSesion = findViewById(R.id.btnCerrarSesion)
         btnEscanearCamara = findViewById(R.id.btnEscanearCamara)
+        btnConsumoPropio = findViewById(R.id.btnConsumoPropio)
+
+        btnTodos = findViewById(R.id.btnTodos)
+        btnCoca = findViewById(R.id.btnCoca)
+        btnChidas = findViewById(R.id.btnChidas)
+        btnTrident = findViewById(R.id.btnTrident)
+        btnMazapan = findViewById(R.id.btnMazapan)
+        btnGalletas = findViewById(R.id.btnGalletas)
 
         recyclerView.layoutManager = LinearLayoutManager(this)
-
-        btnCerrarSesion.setOnClickListener { cerrarSesion() }
-
-        // Botón Cámara
-        btnEscanearCamara.setOnClickListener {
-            iniciarEscaneo()
-        }
 
         adapter = ProductoUsuarioAdapter(listaProductos) { producto ->
             mostrarDialogoSeleccionarCantidad(producto)
         }
         recyclerView.adapter = adapter
 
+        // Listeners Principales
+        btnCerrarSesion.setOnClickListener { cerrarSesion() }
+        btnEscanearCamara.setOnClickListener { iniciarEscaneo() }
         btnVerCuenta.setOnClickListener { mostrarDialogoResumenCuenta() }
 
-        obtenerProductosDelServidor()
+        btnTodos.setOnClickListener {
+            // Muestra de nuevo TODOS los productos originales
+            adapter.actualizarLista(listaProductos)
+            searchView.setQuery("", false)
+            searchView.clearFocus()
+        }
+
+        // Listeners Accesos Rápidos
+        btnCoca.setOnClickListener { filtrarPorAccesoDirecto("Coca-Cola") }
+        btnChidas.setOnClickListener { filtrarPorAccesoDirecto("Las Chidas") }
+        btnTrident.setOnClickListener { filtrarPorAccesoDirecto("Trident") }
+        btnMazapan.setOnClickListener { filtrarPorAccesoDirecto("Mazapán") }
+        btnGalletas.setOnClickListener { filtrarPorAccesoDirecto("Galletas") }
+
+        // Listener Consumo Propio Directo
+        btnConsumoPropio.setOnClickListener {
+            mostrarDialogoConsumoPropioDirecto()
+        }
 
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean = false
@@ -130,44 +150,139 @@ class Usuario : AppCompatActivity() {
             }
         })
 
-        btnCoca = findViewById(R.id.btnCoca)
-        btnChidas = findViewById(R.id.btnChidas)
-        btnTrident = findViewById(R.id.btnTrident)
-        btnMazapan = findViewById(R.id.btnMazapan)
-        btnGalletas = findViewById(R.id.btnGalletas)
+        obtenerProductosDelServidor()
+    }
 
-// Configurar sus eventos Clic
-        btnCoca.setOnClickListener { agregarPorAccesoDirecto("Coca-Cola") }
-        btnChidas.setOnClickListener { agregarPorAccesoDirecto("Las Chidas") }
-        btnTrident.setOnClickListener { agregarPorAccesoDirecto("Trident") }
-        btnMazapan.setOnClickListener { agregarPorAccesoDirecto("Mazapan") }
-        btnGalletas.setOnClickListener { agregarPorAccesoDirecto("Galletas") }
+    private fun filtrarPorAccesoDirecto(criterio: String) {
+        val listaFiltrada = listaProductos.filter { producto ->
+            (producto.marca_nombre?.contains(criterio, ignoreCase = true) == true) ||
+                    (producto.categoria_nombre?.contains(criterio, ignoreCase = true) == true) ||
+                    (producto.nombre?.contains(criterio, ignoreCase = true) == true)
+        }
 
+        if (listaFiltrada.isEmpty()) {
+            Toast.makeText(this, "No hay variantes disponibles de $criterio", Toast.LENGTH_SHORT).show()
+        }
+
+        // Actualiza el adaptador de tu RecyclerView para dibujar las variantes en pantalla
+        adapter.actualizarLista(listaFiltrada)
+    }
+
+
+    // -------------------------------------------------------------
+    // ☕ CONSUMO PROPIO DIRECTO
+    // -------------------------------------------------------------
+    private fun mostrarDialogoConsumoPropioDirecto() {
+        val productosDisponibles = listaProductos.filter { it.inventario > 0 }
+
+        if (productosDisponibles.isEmpty()) {
+            Toast.makeText(this, "No hay productos disponibles en inventario", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val nombresProductos = productosDisponibles.map { "${it.nombre} (Stock: ${it.inventario})" }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle("☕ Seleccionar para Consumo Propio")
+            .setItems(nombresProductos) { _, index ->
+                val productoSeleccionado = productosDisponibles[index]
+                mostrarDialogoCantidadConsumoPropio(productoSeleccionado)
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun mostrarDialogoCantidadConsumoPropio(producto: Producto) {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_seleccionar_cantidad, null)
+        val tvNombre = dialogView.findViewById<TextView>(R.id.tvNombreProductoDialog)
+        val tvPrecio = dialogView.findViewById<TextView>(R.id.tvPrecioUnitarioDialog)
+        val tvStock = dialogView.findViewById<TextView>(R.id.tvStockDisponibleDialog)
+        val etCantidad = dialogView.findViewById<EditText>(R.id.etCantidadDialog)
+        val btnRestar = dialogView.findViewById<Button>(R.id.btnRestar)
+        val btnSumar = dialogView.findViewById<Button>(R.id.btnSumar)
+        val btnAgregar = dialogView.findViewById<Button>(R.id.btnAgregarDialog)
+        val btnCancelar = dialogView.findViewById<Button>(R.id.btnCancelarCantidadDialog)
+
+        tvNombre.text = "☕ Consumo: ${producto.nombre}"
+        tvPrecio.text = "Precio Ref: $${String.format("%.2f", producto.precio_venta)}"
+        tvStock.text = "Stock: ${producto.inventario}"
+        btnAgregar.text = "Confirmar Consumo"
+
+        btnRestar.setOnClickListener {
+            val actual = etCantidad.text.toString().toIntOrNull() ?: 1
+            if (actual > 1) etCantidad.setText((actual - 1).toString())
+        }
+
+        btnSumar.setOnClickListener {
+            val actual = etCantidad.text.toString().toIntOrNull() ?: 1
+            if (actual < producto.inventario) etCantidad.setText((actual + 1).toString())
+            else Toast.makeText(this, "Stock máximo alcanzado", Toast.LENGTH_SHORT).show()
+        }
+
+        val dialog = AlertDialog.Builder(this).setView(dialogView).create()
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        btnAgregar.setOnClickListener {
+            val cantidad = etCantidad.text.toString().toIntOrNull() ?: 0
+            if (cantidad <= 0) {
+                Toast.makeText(this, "Ingresa una cantidad válida", Toast.LENGTH_SHORT).show()
+            } else if (cantidad > producto.inventario) {
+                Toast.makeText(this, "Excede el inventario disponible", Toast.LENGTH_SHORT).show()
+            } else {
+                dialog.dismiss()
+                procesarConsumoPropio(producto, cantidad)
+            }
+        }
+
+        btnCancelar.setOnClickListener { dialog.dismiss() }
+        dialog.show()
+    }
+
+    private fun procesarConsumoPropio(producto: Producto, cantidad: Int) {
+        val correoActual = FirebaseAuth.getInstance().currentUser?.email ?: ""
+        val request = mapOf(
+            "codigo_barras" to producto._id,
+            "cantidad" to cantidad.toString(),
+            "correo_usuario" to correoActual,
+            "motivo" to "Consumo de Empleado"
+        )
+
+        RetrofitClient.instance.registrarConsumoPropio(tokenJwt, request)
+            .enqueue(object : Callback<ConsumoResponse> {
+                override fun onResponse(call: Call<ConsumoResponse>, response: Response<ConsumoResponse>) {
+                    if (response.isSuccessful) {
+                        Toast.makeText(this@Usuario, "☕ Consumo propio descontado de inventario", Toast.LENGTH_SHORT).show()
+                        obtenerProductosDelServidor()
+                    } else {
+                        Toast.makeText(this@Usuario, "Error al registrar consumo", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                override fun onFailure(call: Call<ConsumoResponse>, t: Throwable) {
+                    Toast.makeText(this@Usuario, "Error de conexión", Toast.LENGTH_SHORT).show()
+                }
+            })
     }
 
     // -------------------------------------------------------------
-    // 📷 INICIAR CÁMARA ESCÁNER
+    // 📷 ESCÁNER Y GPS
     // -------------------------------------------------------------
     private fun iniciarEscaneo() {
         val options = ScanOptions()
         options.setDesiredBarcodeFormats(ScanOptions.ALL_CODE_TYPES)
         options.setPrompt("Apunta al código de barras del producto")
-        options.setCameraId(0) // Usar cámara trasera
+        options.setCameraId(0)
         options.setBeepEnabled(true)
         options.setBarcodeImageEnabled(false)
         options.setOrientationLocked(false)
         barcodeLauncher.launch(options)
     }
 
-    // -------------------------------------------------------------
-    // 📍 OBTENER DIRECCIÓN GPS REAL
-    // -------------------------------------------------------------
     private fun solicitarUbicacionActual() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1001)
             return
         }
-
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
             if (location != null) {
                 try {
@@ -190,12 +305,8 @@ class Usuario : AppCompatActivity() {
         }
     }
 
-    // -------------------------------------------------------------
-    // 🧾 MUESTRA DE TICKET INCLUYENDO UBICACIÓN
-    // -------------------------------------------------------------
     private fun mostrarTicketModal(ventaRealizada: List<ItemCarrito>) {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_ticket, null)
-
         val rvProductos = dialogView.findViewById<RecyclerView>(R.id.rvProductosTicket)
         val tvSubtotal = dialogView.findViewById<TextView>(R.id.tvSubtotalTicket)
         val tvIva16 = dialogView.findViewById<TextView>(R.id.tvIva16Ticket)
@@ -217,9 +328,7 @@ class Usuario : AppCompatActivity() {
         for (item in ventaRealizada) {
             val importeTotalProducto = item.producto.precio_venta * item.cantidad
             totalGeneral += importeTotalProducto
-
             val tasaIva = item.producto.obtenerTasaIva()
-
             if (tasaIva > 0.0) {
                 val base = importeTotalProducto / (1.0 + tasaIva)
                 val ivaMonto = importeTotalProducto - base
@@ -243,43 +352,26 @@ class Usuario : AppCompatActivity() {
             .setView(dialogView)
             .setCancelable(false)
             .create()
-
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
-        btnCerrar.setOnClickListener {
-            dialog.dismiss()
-        }
-
+        btnCerrar.setOnClickListener { dialog.dismiss() }
         dialog.show()
     }
 
-    // -------------------------------------------------------------
-    // 🚪 CERRAR SESIÓN
-    // -------------------------------------------------------------
     private fun cerrarSesion() {
-        // Obtenemos el correo del usuario actualmente logueado en Firebase
         val correoUsuario = FirebaseAuth.getInstance().currentUser?.email ?: ""
-
         if (correoUsuario.isNotEmpty()) {
             Toast.makeText(this, "Procesando corte de caja...", Toast.LENGTH_SHORT).show()
-
-            // Llamada al endpoint de FastAPI consultando directo por correo
             RetrofitClient.instance.realizarCorteAutomatico(correoUsuario)
                 .enqueue(object : Callback<CorteResponse> {
                     override fun onResponse(call: Call<CorteResponse>, response: Response<CorteResponse>) {
                         if (response.isSuccessful && response.body() != null) {
                             val total = response.body()?.total_acumulado ?: 0.0
                             val mensaje = response.body()?.message ?: "Corte registrado"
-
-                            Toast.makeText(
-                                this@Usuario,
-                                "$mensaje. Total de ventas: $$total",
-                                Toast.LENGTH_LONG
-                            ).show()
+                            Toast.makeText(this@Usuario, "$mensaje. Total de ventas: $$total", Toast.LENGTH_LONG).show()
                         } else {
                             Toast.makeText(this@Usuario, "Aviso: No se pudo registrar el corte automático", Toast.LENGTH_SHORT).show()
                         }
-                        // Procedemos a salir
                         finalizarSalida()
                     }
 
@@ -298,16 +390,12 @@ class Usuario : AppCompatActivity() {
         FirebaseAuth.getInstance().signOut()
         val prefs = getSharedPreferences("MisPreferencias", Context.MODE_PRIVATE)
         prefs.edit().clear().apply()
-
         Toast.makeText(this, "Sesión cerrada correctamente", Toast.LENGTH_SHORT).show()
         val intent = Intent(this, LoginActivity::class.java)
         startActivity(intent)
         finish()
     }
 
-    // -------------------------------------------------------------
-    // 🪟 VENTANA FLOTANTE: CANTIDAD
-    // -------------------------------------------------------------
     private fun mostrarDialogoSeleccionarCantidad(producto: Producto) {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_seleccionar_cantidad, null)
         val tvNombre = dialogView.findViewById<TextView>(R.id.tvNombreProductoDialog)
@@ -346,6 +434,7 @@ class Usuario : AppCompatActivity() {
                 dialog.dismiss()
             }
         }
+
         btnCancelar.setOnClickListener { dialog.dismiss() }
         dialog.show()
     }
@@ -368,12 +457,9 @@ class Usuario : AppCompatActivity() {
     private fun actualizarBotonCuenta() {
         val total = carrito.sumOf { it.producto.precio_venta * it.cantidad }
         val numArticulos = carrito.sumOf { it.cantidad }
-        btnVerCuenta.text = "🛒 Ver Cuenta ($numArticulos art.) - $${String.format("%.2f", total)}"
+        btnVerCuenta.text = "🛒 Cuenta ($numArticulos art.) - $${String.format("%.2f", total)}"
     }
 
-    // -------------------------------------------------------------
-    // 🪟 VENTANA FLOTANTE: RESUMEN DE CARRITO
-    // -------------------------------------------------------------
     private fun mostrarDialogoResumenCuenta() {
         if (carrito.isEmpty()) {
             Toast.makeText(this, "El carrito está vacío", Toast.LENGTH_SHORT).show()
@@ -399,35 +485,31 @@ class Usuario : AppCompatActivity() {
             dialog.dismiss()
             procesarVentaCarrito()
         }
+
         btnVaciar.setOnClickListener {
             carrito.clear()
             actualizarBotonCuenta()
             dialog.dismiss()
             Toast.makeText(this, "Carrito vaciado", Toast.LENGTH_SHORT).show()
         }
+
         btnSeguir.setOnClickListener { dialog.dismiss() }
         dialog.show()
     }
 
-    // -------------------------------------------------------------
-    // 🌐 VENTA Y SINCRONIZACIÓN CON FASTAPI
-    // -------------------------------------------------------------
     private fun procesarVentaCarrito() {
         if (carrito.isEmpty()) return
         val ventaTicket = ArrayList(carrito)
         var ventasExitosas = 0
         val totalVentas = carrito.size
-
-        // 🔴 OBTENER CORREO DEL VENDEDOR ACTUAL DE FIREBASE
         val correoVendedor = FirebaseAuth.getInstance().currentUser?.email ?: ""
 
         for (item in carrito) {
             val requestVenta = VentaRequest(
                 codigo_barras = item.producto._id,
                 cantidad = item.cantidad,
-                correo_vendedor = correoVendedor // 👈 ¡CLAVE PARA ASIGNAR LA VENTA AL CAJERO!
+                correo_vendedor = correoVendedor
             )
-
             RetrofitClient.instance.realizarVenta(tokenJwt, requestVenta)
                 .enqueue(object : Callback<VentaResponse> {
                     override fun onResponse(call: Call<VentaResponse>, response: Response<VentaResponse>) {
@@ -440,6 +522,7 @@ class Usuario : AppCompatActivity() {
                             obtenerProductosDelServidor()
                         }
                     }
+
                     override fun onFailure(call: Call<VentaResponse>, t: Throwable) {
                         Toast.makeText(this@Usuario, "Error en producto: ${item.producto.nombre}", Toast.LENGTH_SHORT).show()
                     }
@@ -453,16 +536,14 @@ class Usuario : AppCompatActivity() {
                 override fun onResponse(call: Call<List<Producto>>, response: Response<List<Producto>>) {
                     if (response.isSuccessful && response.body() != null) {
                         listaProductos.clear()
-
-                        // 🔴 CAMBIO AQUÍ: Filtrar solo los productos con stock mayor a 0
                         val productosConStock = response.body()!!.filter { it.inventario > 0 }
-
                         listaProductos.addAll(productosConStock)
                         adapter.actualizarLista(listaProductos)
                     } else {
                         Toast.makeText(this@Usuario, "Error al cargar productos", Toast.LENGTH_SHORT).show()
                     }
                 }
+
                 override fun onFailure(call: Call<List<Producto>>, t: Throwable) {
                     Log.e("API_ERROR", "Error de red: ${t.message}")
                     Toast.makeText(this@Usuario, "Fallo de conexión", Toast.LENGTH_SHORT).show()
@@ -471,9 +552,7 @@ class Usuario : AppCompatActivity() {
     }
 
     private fun filtrar(texto: String?) {
-        // 🔴 CAMBIO AQUÍ: Aseguramos mantener únicamente los de stock > 0 al buscar
         val productosDisponibles = listaProductos.filter { it.inventario > 0 }
-
         val listaFiltrada = if (texto.isNullOrEmpty()) {
             productosDisponibles
         } else {
@@ -483,20 +562,13 @@ class Usuario : AppCompatActivity() {
     }
 
     private fun agregarPorAccesoDirecto(busqueda: String) {
-        // Busca el primer producto en la lista cargada que coincida con el nombre
         val productoEncontrado = listaProductos.find {
             it.nombre.lowercase().contains(busqueda.lowercase()) && it.inventario > 0
         }
-
         if (productoEncontrado != null) {
-            // Abre tu modal existente para elegir cantidad
             mostrarDialogoSeleccionarCantidad(productoEncontrado)
         } else {
-            Toast.makeText(
-                this,
-                "Producto '$busqueda' no disponible en stock o no existe en catálogo",
-                Toast.LENGTH_SHORT
-            ).show()
+            Toast.makeText(this, "Producto '$busqueda' no disponible en stock", Toast.LENGTH_SHORT).show()
         }
     }
 }

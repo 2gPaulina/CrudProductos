@@ -85,7 +85,6 @@
                 android:queryBackground="@android:color/transparent"
                 android:queryHint="Buscar producto..." />
 
-            <!-- 📷 BOTÓN DE CÁMARA PARA ESCANEAR -->
             <ImageButton
                 android:id="@+id/btnEscanearCamara"
                 android:layout_width="48dp"
@@ -98,7 +97,7 @@
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
-    <!-- ⚡ BARRA DE BOTONES RÁPIDOS (RF-21) -->
+    <!-- ⚡ BARRA DE BOTONES RÁPIDOS -->
     <HorizontalScrollView
         android:id="@+id/scrollBotonesRapidos"
         android:layout_width="0dp"
@@ -114,6 +113,15 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
+
+            <!-- 🔘 Botón para restablecer y ver TODOS los productos -->
+            <Button
+                android:id="@+id/btnTodos"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:text="🛒 Todos"
+                android:textSize="12sp" />
 
             <Button
                 android:id="@+id/btnCoca"
@@ -172,31 +180,46 @@
         app:layout_constraintTop_toBottomOf="@+id/scrollBotonesRapidos"
         tools:listitem="@layout/item_producto_usuario" />
 
-    <!-- 🛒 BARRA FLOTANTE INFERIOR (CUENTA / CARRITO) -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardBottomBar"
+    <!-- 🛒 BARRA FLOTANTE INFERIOR -->
+    <LinearLayout
+        android:id="@+id/bottomBarContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
-        app:cardBackgroundColor="#0284C7"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="6dp"
+        android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnVerCuenta"
-            android:layout_width="match_parent"
+            android:id="@+id/btnConsumoPropio"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:backgroundTint="@android:color/transparent"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:backgroundTint="#F59E0B"
             android:paddingVertical="14dp"
-            android:text="🛒 Ver Cuenta ($0.00)"
+            android:text="☕ Consumo"
             android:textColor="#FFFFFF"
-            android:textSize="16sp"
+            android:textSize="14sp"
             android:textStyle="bold"
             app:cornerRadius="16dp"
-            app:elevation="0dp" />
-    </androidx.cardview.widget.CardView>
+            app:elevation="4dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnVerCuenta"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.8"
+            android:backgroundTint="#0284C7"
+            android:paddingVertical="14dp"
+            android:text="🛒 Cuenta ($0.00)"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:cornerRadius="16dp"
+            app:elevation="4dp" />
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
