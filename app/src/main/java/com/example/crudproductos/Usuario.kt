@@ -531,22 +531,33 @@ class Usuario : AppCompatActivity() {
     }
 
     private fun obtenerProductosDelServidor() {
+        Log.d("API_DEBUG", "Enviando Token: $tokenJwt")
+
         RetrofitClient.instance.obtenerTodosLosProductos(tokenJwt)
             .enqueue(object : Callback<List<Producto>> {
                 override fun onResponse(call: Call<List<Producto>>, response: Response<List<Producto>>) {
                     if (response.isSuccessful && response.body() != null) {
                         listaProductos.clear()
-                        val productosConStock = response.body()!!.filter { it.inventario > 0 }
-                        listaProductos.addAll(productosConStock)
+
+                        // CORRECCIÓN 2: Cargar todos los productos recibidos para verificar la respuesta
+                        val productosRecibidos = response.body()!!
+                        Log.d("API_DEBUG", "Productos recibidos del servidor: ${productosRecibidos.size}")
+
+                        listaProductos.addAll(productosRecibidos)
                         adapter.actualizarLista(listaProductos)
+
+                        if (listaProductos.isEmpty()) {
+                            Toast.makeText(this@Usuario, "La base de datos no devolvió productos", Toast.LENGTH_SHORT).show()
+                        }
                     } else {
-                        Toast.makeText(this@Usuario, "Error al cargar productos", Toast.LENGTH_SHORT).show()
+                        Log.e("API_ERROR", "Código de error: ${response.code()} - Mensaje: ${response.errorBody()?.string()}")
+                        Toast.makeText(this@Usuario, "Error al cargar productos (${response.code()})", Toast.LENGTH_SHORT).show()
                     }
                 }
 
                 override fun onFailure(call: Call<List<Producto>>, t: Throwable) {
                     Log.e("API_ERROR", "Error de red: ${t.message}")
-                    Toast.makeText(this@Usuario, "Fallo de conexión", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@Usuario, "Fallo de conexión: ${t.message}", Toast.LENGTH_SHORT).show()
                 }
             })
     }
